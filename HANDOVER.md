@@ -92,9 +92,41 @@ wkhtmltoimage 0.12.6 nutzt einen alten WebKit-Renderer. Folgendes funktioniert N
 - Modernes CSS Grid → flexbox nutzen
 - CSS `clamp()` → serverseitige Berechnung über Handlebars-Helper
 
-## PDF-Export (WeasyPrint + CMYK)
+## PDF-Export (WeasyPrint + CMYK + PDF/X-4)
 
 PDF-Export nutzt **WeasyPrint** statt wkhtmltoimage. Vorteile: Vektor-Text (scharf bei jedem Zoom-Level), korrekte Seitengrößen via `@page`-CSS.
+
+### PDF/X-4:2008 Konformität (27.08.2026)
+
+Das Ausgabe-PDF entspricht dem **PDF/X-4:2008** Standard (ISO 15930). Konfiguration basiert auf den Adobe Job Options der Polizeiakademie.
+
+**Einstellungen (aus .joboptions übernommen):**
+- Standard: PDF/X-4:2008
+- Output Intent: **Coated FOGRA27 (ISO 12647-2:2004)**
+- RGB Input: sRGB IEC61966-2.1
+- CMYK Output: FOGRA27
+- Transparenzen: erlaubt (PDF/X-4 unterstützt diese)
+- Alle Fonts eingebettet
+- ICC-Profile beibehalten
+
+**ICC-Profile:**
+- `assets/CoatedFOGRA27.icc` — CMYK Output-Profil (557KB, von Adobe)
+- `assets/sRGB.icc` — RGB Input-Profil (Ghostscript-Default)
+
+**Ghostscript-Parameter:**
+```
+gs -dNOSAFER -dNOPAUSE -dBATCH -dQUIET \
+  -sDEVICE=pdfwrite -dPDFX \
+  -sColorConversionStrategy=CMYK \
+  -dProcessColorModel=/DeviceCMYK \
+  -sDefaultRGBProfile=assets/sRGB.icc \
+  -sOutputICCProfile=assets/CoatedFOGRA27.icc \
+  -I assets/ \
+  -sOutputFile=output.pdf \
+  assets/PDFX4_def.ps input.pdf
+```
+
+**PDFX4_def.ps:** PostScript-Definition-Datei die OutputIntent, ICC-Profil-Einbettung und GTS_PDFXVersion setzt.
 
 ### Renderer-Unterscheidung
 - `format === 'png'` → wkhtmltoimage (Pixel-basiert)
@@ -105,21 +137,22 @@ PDF-Export nutzt **WeasyPrint** statt wkhtmltoimage. Vorteile: Vektor-Text (scha
 2. **@page-CSS:** `pageWidth`/`pageHeight` aus dem `formats`-Array werden als `@page { size: ...; margin: 0; }` ins HTML injiziert.
 3. **Dimensionen:** PNG nutzt Pixel (z.B. 560×793), PDF nutzt mm/px aus `pageWidth`/`pageHeight` (z.B. 148mm×210mm).
 
-### CMYK-Post-Processing (Ghostscript)
+### PDF/X-4 Post-Processing (Ghostscript)
 - **Wann:** Nur bei Druckformaten (Flyer A5, Plakat A4), NICHT bei Instagram
-- **Warum:** Druckereien erwarten CMYK-Farbraum, nicht RGB
-- **Wie:** Ghostscript `pdfwrite` Device mit `-sColorConversionStrategy=CMYK`
+- **Warum:** Druckereien erwarten PDF/X-4 mit CMYK-Farbraum und ICC-Profilen
+- **Wie:** Ghostscript `pdfwrite` Device mit `-dPDFX`, `-sColorConversionStrategy=CMYK`, FOGRA27 ICC-Profil
 - **Fallback:** Bei Fehlschlag wird die RGB-Version beibehalten (non-fatal, nur Warning)
 
 ### Befehlskette
 ```
-HTML → weasyprint → RGB-PDF → gs (CMYK) → CMYK-PDF → Download
+HTML → weasyprint → RGB-PDF → gs (PDF/X-4 + CMYK + FOGRA27) → PDF/X-4-PDF → Download
 ```
 
 ### Wichtig
 - WeasyPrint 68.1 + Ghostscript 10.02.1 müssen installiert sein
-- `pageWidth`/`pageHeight` im `formats`-Array sindPflicht für PDF (mm oder px)
-- Instagram-Format bleibt RGB (kein CMYK)
+- `pageWidth`/`pageHeight` im `formats`-Array sind Pflicht für PDF (mm oder px)
+- Instagram-Format bleibt RGB (kein CMYK, kein PDF/X-4)
+- `-dNOSAFER` ist erforderlich damit Ghostscript die ICC-Profile lesen kann
 
 ## Renderer-Flow
 
@@ -137,8 +170,9 @@ HTML → weasyprint → RGB-PDF → gs (CMYK) → CMYK-PDF → Download
 9. Rendering:
    - **PNG:** `wkhtmltoimage` rendert zu PNG (Pixel-basiert)
    - **PDF:** `weasyprint` rendert zu PDF (Vektor-Text, korrekte Seitengrößen via `@page`-CSS)
-10. **PDF CMYK-Post-Processing** (nur Druckformate, nicht Instagram):
-    - Ghostscript konvertiert RGB → CMYK (`-sColorConversionStrategy=CMYK`)
+10. **PDF/X-4 Post-Processing** (nur Druckformate, nicht Instagram):
+    - Ghostscript konvertiert RGB → CMYK mit PDF/X-4:2008 Konformität
+    - FOGRA27 ICC-Profil wird als OutputIntent eingebettet
     - Bei Fehlschlag: RGB wird beibehalten (non-fatal)
 11. Datei wird als Download gesendet, dann gelöscht (inkl. QR-Temp-Datei)
 

@@ -290,25 +290,33 @@ class FlyerRenderer {
       throw new Error(`${format === 'pdf' ? 'WeasyPrint' : 'wkhtmltoimage'} fehlgeschlagen: ${err.stderr?.toString() || err.message}`);
     }
 
-    // 9. CMYK-Post-Processing für Druckformate (Ghostscript)
+    // 9. PDF/X-4 Post-Processing (Ghostscript)
+    // Converts RGB PDF to CMYK with PDF/X-4:2007 conformance
+    // Uses FOGRA27 ICC profile (Coated FOGRA27, ISO 12647-2:2004)
     if (format === 'pdf' && options.formatId !== 'instagram') {
       const cmykFile = outputFile.replace(`_${timestamp}`, `_${timestamp}_cmyk`);
+      const absAssets = path.resolve(this.assetsDir);
       const gsCmd = [
-        'gs', '-dNOPAUSE', '-dBATCH', '-dQUIET',
+        'gs', '-dNOSAFER', '-dNOPAUSE', '-dBATCH', '-dQUIET',
         '-sDEVICE=pdfwrite',
+        '-dPDFX',
         '-sColorConversionStrategy=CMYK',
         '-dProcessColorModel=/DeviceCMYK',
+        `-sDefaultRGBProfile=${absAssets}/sRGB.icc`,
+        `-sOutputICCProfile=${absAssets}/CoatedFOGRA27.icc`,
+        `-I${absAssets}`,
         `-sOutputFile="${cmykFile}"`,
+        `"${absAssets}/PDFX4_def.ps"`,
         `"${outputFile}"`
       ].join(' ');
       try {
         execSync(gsCmd, { stdio: 'pipe' });
-        // Replace RGB PDF with CMYK version
+        // Replace RGB PDF with CMYK/PDFX-4 version
         fs.unlinkSync(outputFile);
         fs.renameSync(cmykFile, outputFile);
       } catch (gsErr) {
-        // If CMYK conversion fails, keep RGB version (non-fatal)
-        console.warn('CMYK-Konvertierung fehlgeschlagen (RGB wird beibehalten):', gsErr.message);
+        // If PDF/X-4 conversion fails, keep RGB version (non-fatal)
+        console.warn('PDF/X-4 Konvertierung fehlgeschlagen (RGB wird beibehalten):', gsErr.message);
         try { fs.unlinkSync(cmykFile); } catch (_) {}
       }
     }
