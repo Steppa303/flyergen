@@ -12,11 +12,11 @@ export async function fetchTemplate(id) {
   return res.json();
 }
 
-export async function renderFlyer(templateId, data, format = 'png', formatId = 'flyer') {
+export async function renderFlyer(templateId, data, format = 'png', formatId = 'flyer', hiddenFields = {}) {
   const res = await fetch(`${API_BASE}/render`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ template: templateId, data, format, formatId }),
+    body: JSON.stringify({ template: templateId, data, format, formatId, hiddenFields }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Render fehlgeschlagen' }));

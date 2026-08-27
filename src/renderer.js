@@ -156,6 +156,13 @@ class FlyerRenderer {
         return '<div class="cta-line">' + handlebars.Utils.escapeExpression(line) + '</div>';
       }).join('\n');
     });
+
+    // isHidden: check if a field is in the hiddenFields object
+    // Usage: {{#unless (isHidden 'fieldId')}}...{{/unless}}
+    handlebars.registerHelper('isHidden', function (fieldId, options) {
+      var hiddenFields = options.data.root._hiddenFields || {};
+      return !!hiddenFields[fieldId];
+    });
   }
 
   /**

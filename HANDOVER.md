@@ -1,6 +1,6 @@
 # FlyerGen — HANDOVER
 
-**Datum:** 2026-08-27 (updated 07:46)
+**Datum:** 2026-08-27 (updated 09:56)
 **Status:** Deployed & Aktiv
 **URL:** https://flyergen.steppa.online
 **Repo:** https://github.com/Steppa303/flyergen
@@ -10,10 +10,12 @@
 Formular-basierter Flyer/Plakat-Generator für die Polizeiakademie Niedersachsen.
 User wählt ein Template, füllt Felder aus, lädt ggf. ein Bild hoch, sieht live eine Vorschau und exportiert als PNG oder PDF.
 
-## Aktueller Stand (26.08.2026, updated 19:50)
+## Aktueller Stand (27.08.2026, updated 09:56)
 
-3 Templates implementiert:
-- **Krimi-Tour** — Event-Plakat mit Absperrband, Overlay-Text, Yellow Box
+1 Template aktiv:
+- **Einzel-Event** (ehem. Krimi-Tour) — Event-Plakat mit Absperrband, Overlay-Text, Yellow Box
+
+2 Templates ausgeblendet (`hidden: true` in server.js):
 - **Crime Coaches** — Ähnliches Layout, grüne Info-Bar
 - **Polizei-Informatik** — Anderes Layout mit Photo-Bereich, CTA Stamp
 
@@ -57,7 +59,7 @@ User wählt ein Template, füllt Felder aus, lädt ggf. ein Bild hoch, sieht liv
 - Bild-Upload + Galerie (Multer + Sharp, max 40MB)
 - Bild wird im Header als Hintergrund gerendert
 - Editierbarer Overlay-Text (overlayLine1/2)
-- Felder können ausgeblendet werden (Eye-Toggle)
+- **Felder-Ausblenden (Eye-Toggle)** — Blendet das Element auf dem Flyer aus, Formularzeile bleibt sichtbar aber deaktiviert (opacity-40, disabled inputs)
 - Polizei-Stern als Gestaltungselement (100mm, angeschnitten)
 - Absperrband verschwindet automatisch bei Bild-Upload
 - Live-Vorschau (debounced 800ms)
@@ -121,11 +123,12 @@ HTML → weasyprint → RGB-PDF → gs (CMYK) → CMYK-PDF → Download
 
 ## Renderer-Flow
 
-1. Frontend sendet `{ template, data, format, formatId }` an `/api/render`
+1. Frontend sendet `{ template, data, format, formatId, hiddenFields }` an `/api/render`
 2. Backend lädt Template-HTML aus `templates/`
-3. Wenn `qrUrl` angegeben: QR-Code als PNG generieren, Pfad in `data.qrCodeImage`
-4. Handlebars kompiliert Template mit data (inkl. `fontSize`-Helper)
-5. `renderer.js` konvertiert:
+3. `hiddenFields` wird als `data._hiddenFields` ans Template übergeben
+4. Wenn `qrUrl` angegeben: QR-Code als PNG generieren, Pfad in `data.qrCodeImage`
+5. Handlebars kompiliert Template mit data (inkl. `fontSize`, `isHidden`-Helper)
+6. `renderer.js` konvertiert:
    - `/uploads/xxx` → `file:///root/.../uploads/xxx` (absoluter Pfad)
    - Asset-Pfade → `file://` URLs
 6. Body-Klasse `format-{formatId}` wird ins HTML injiziert
@@ -189,6 +192,38 @@ Der untere Gradient (`header-bg-overlay`) geht flacher ins Bild:
 
 - `qr-slogan` hat `margin-left: 5mm` damit er nicht unter dem QR-Code verschwindet
 
+## Felder-Ausblenden (Hidden Fields)
+
+Eye-Toggle bei jedem Formularfeld. Blendet das **Element auf dem Flyer** aus, nicht die Formularzeile.
+
+### Architektur
+1. **Frontend (FormField.jsx):** Ausgeblendete Felder bleiben sichtbar aber deaktiviert (`opacity-40`, `pointer-events-none`, disabled Inputs). Eye-Icon bleibt klickbar (`pointer-events-auto`).
+2. **Store (useStore.js):** `hiddenFields` Objekt `{ fieldId: true }` — wird in LocalStorage persistiert.
+3. **API (client.js):** `renderFlyer()` sendet `hiddenFields` ans Backend (nicht mehr Filterung der formData).
+4. **Backend (server.js):** Akzeptiert `hiddenFields` aus Request, setzt `data._hiddenFields`.
+5. **Renderer (renderer.js):** `isHidden` Handlebars-Helper prüft `data._hiddenFields`.
+6. **Templates:** Jedes Element mit `{{#unless (isHidden 'fieldId')}}...{{/unless}}` umschlossen.
+
+### Handlebars Helper
+```handlebars
+{{#unless (isHidden 'headerLine2')}}
+  <div class="header-line2">{{headerLine2}}</div>
+{{/unless}}
+```
+
+### Was ausgeblendet werden kann
+- headerLine1, headerLine2 (einzeln)
+- overlayLine1, overlayLine2 (einzeln, mit Fallback auf jeweils andere Zeile)
+- eventTitle, eventDescription (einzeln, Yellow/Green Box bleibt wenn mind. 1 sichtbar)
+- eventDate, locationLines (einzeln)
+- ctaText, sloganLine1, sloganLine2 (einzeln)
+- qrUrl (QR-Code + Corner-Decorations)
+
+### Wichtig
+- `hiddenFields` muss im useEffect-Dependency-Array von EditorPage sein (sonst keine Re-Render bei Toggle)
+- Backend füllt Default-Werte für ALLE Felder (auch ausgeblendete) — Template entscheidet via `isHidden` was gerendert wird
+- Deploy: Immer `deploy.sh` nutzen (buildet Frontend + kopiert nach `/var/www/apps/flyergen/`)
+
 ## Auto-Schriftenverkleinerung
 
 Handlebars-Helper `fontSize` in `renderer.js`:
@@ -245,7 +280,7 @@ Handlebars-Helper in `renderer.js` die Textbreite schätzen und Font-Size automa
 ```js
 {
   '01-krimi-tour': {
-    name: 'Krimi-Tour',
+    name: 'Einzel-Event',
     fields: [
       { id: 'headerLine1', type: 'text', label: '...', default: '...' },
       { id: 'overlayLine1', type: 'text', label: 'Overlay Zeile 1', default: 'KRIMI' },
@@ -262,24 +297,32 @@ Handlebars-Helper in `renderer.js` die Textbreite schätzen und Font-Size automa
 }
 ```
 
-## Frontend State (Zustand)
+## Frontend State (Zustand + LocalStorage Persistence)
 
 ```js
 {
-  templates: [],
-  selectedTemplate: null,
-  formData: {},
-  hiddenFields: {},
-  exportFilename: 'flyer',
-  previewUrl: null,
-  previewHtml: null,
-  loading: false,
-  renderLoading: false,
-  error: null,
-  selectedFormat: 'flyer',  // Aktives Format
-  formats: [],               // Verfügbare Formate vom Template
+  templates: [],              // nicht persistiert
+  selectedTemplate: null,     // persistiert
+  formData: {},               // persistiert
+  hiddenFields: {},           // persistiert
+  exportFilename: 'flyer',    // persistiert
+  previewUrl: null,           // nicht persistiert (ObjectURL)
+  previewHtml: null,          // nicht persistiert
+  loading: false,             // nicht persistiert
+  renderLoading: false,       // nicht persistiert
+  error: null,                // nicht persistiert
+  selectedFormat: 'flyer',    // persistiert
+  formats: [],                // persistiert
 }
 ```
+
+### LocalStorage Persistence
+- Zustand `persist` Middleware mit `createJSONStorage(() => localStorage)`
+- Key: `flyergen-editor`
+- `partialize`: Nur User-Daten werden persistiert (formData, selectedTemplate, hiddenFields, selectedFormat, exportFilename, formats)
+- Transient State (loading, error, previewUrl) wird nicht gespeichert
+- Bei Browser-Refresh/-Neustart werden die Felder automatisch wiederhergestellt
+- `resetEditor()` löscht auch den LocalStorage-Eintrag
 
 ## API Endpoints
 
@@ -287,7 +330,7 @@ Handlebars-Helper in `renderer.js` die Textbreite schätzen und Font-Size automa
 |----------|---------|-------------|
 | `/api/templates` | GET | Liste aller Templates (inkl. formats) |
 | `/api/templates/:id` | GET | Template-Details mit Schema + formats |
-| `/api/render` | POST | Render als PNG/PDF (body: template, data, format, formatId) |
+| `/api/render` | POST | Render als PNG/PDF (body: template, data, format, formatId, hiddenFields) |
 | `/api/render-html` | POST | Gerendertes HTML (Debugging) |
 | `/api/upload` | POST | Bild hochladen |
 | `/api/images` | GET | Alle Bilder auflisten |
@@ -380,3 +423,7 @@ flyergen/
 - [x] CMYK-Support für Druck (Ghostscript, 26.08.2026)
 - [x] PDF-Export (WeasyPrint, 26.08.2026)
 - [x] GitHub Repo (27.08.2026)
+- [x] LocalStorage Persistence (Zustand persist, 27.08.2026)
+- [x] Template umbenannt: Krimi-Tour → Einzel-Event (27.08.2026)
+- [x] Templates ausgeblendet: Crime Coaches + Polizei-Informatik (27.08.2026)
+- [x] Felder-Ausblenden: Flyer-Element ausblenden statt Formularzeile (27.08.2026)

@@ -25,7 +25,7 @@ app.use('/uploads', express.static(UPLOAD_DIR));
 // Template-Definitionen mit Feld-Schemas
 const templateSchemas = {
   '01-krimi-tour': {
-    name: 'Krimi-Tour',
+    name: 'Einzel-Event',
     formats: [
       { id: 'flyer', name: 'Flyer (A5)', width: 560, height: 793, label: 'A5 Portrait', pageWidth: '148mm', pageHeight: '210mm' },
       { id: 'poster', name: 'Plakat (A4)', width: 793, height: 1123, label: 'A4 Portrait', pageWidth: '210mm', pageHeight: '297mm' },
@@ -49,6 +49,7 @@ const templateSchemas = {
   },
   '02-crime-coaches': {
     name: 'Crime Coaches',
+    hidden: true,
     formats: [
       { id: 'flyer', name: 'Flyer (A5)', width: 560, height: 793, label: 'A5 Portrait', pageWidth: '148mm', pageHeight: '210mm' },
       { id: 'poster', name: 'Plakat (A4)', width: 793, height: 1123, label: 'A4 Portrait', pageWidth: '210mm', pageHeight: '297mm' },
@@ -72,6 +73,7 @@ const templateSchemas = {
   },
   '03-pol-informatik': {
     name: 'Polizei-Informatik',
+    hidden: true,
     formats: [
       { id: 'flyer', name: 'Flyer (A5)', width: 560, height: 793, label: 'A5 Portrait', pageWidth: '148mm', pageHeight: '210mm' },
       { id: 'poster', name: 'Plakat (A4)', width: 793, height: 1123, label: 'A4 Portrait', pageWidth: '210mm', pageHeight: '297mm' },
@@ -89,11 +91,13 @@ const templateSchemas = {
 
 // GET /api/templates — Liste aller Templates
 app.get('/api/templates', (req, res) => {
-  const templates = Object.entries(templateSchemas).map(([id, schema]) => ({
-    id,
-    name: schema.name,
-    fields: schema.fields
-  }));
+  const templates = Object.entries(templateSchemas)
+    .filter(([, schema]) => !schema.hidden)
+    .map(([id, schema]) => ({
+      id,
+      name: schema.name,
+      fields: schema.fields
+    }));
   res.json(templates);
 });
 
@@ -106,7 +110,7 @@ app.get('/api/templates/:id', (req, res) => {
 
 // POST /api/render — Flyer rendern
 app.post('/api/render', async (req, res) => {
-  const { template, data, format, dpi, formatId } = req.body;
+  const { template, data, format, dpi, formatId, hiddenFields } = req.body;
 
   if (!template || !templateSchemas[template]) {
     return res.status(400).json({ error: 'Ungültiges Template. Verfügbare: ' + Object.keys(templateSchemas).join(', ') });
@@ -118,6 +122,9 @@ app.post('/api/render', async (req, res) => {
   schema.fields.forEach(field => {
     renderData[field.id] = data?.[field.id] ?? field.default;
   });
+
+  // Hidden Fields an Renderer weitergeben
+  renderData._hiddenFields = hiddenFields || {};
 
   // QR-Code generieren wenn URL angegeben
   let qrPath = null;
@@ -150,7 +157,7 @@ app.post('/api/render', async (req, res) => {
 
 // POST /api/render-html — Gerendertes HTML zurückgeben (Debugging)
 app.post('/api/render-html', async (req, res) => {
-  const { template, data } = req.body;
+  const { template, data, hiddenFields } = req.body;
 
   if (!template || !templateSchemas[template]) {
     return res.status(400).json({ error: 'Ungültiges Template' });
@@ -161,6 +168,9 @@ app.post('/api/render-html', async (req, res) => {
   schema.fields.forEach(field => {
     renderData[field.id] = data?.[field.id] ?? field.default;
   });
+
+  // Hidden Fields an Renderer weitergeben
+  renderData._hiddenFields = hiddenFields || {};
 
   // QR-Code generieren wenn URL angegeben
   let qrPath = null;

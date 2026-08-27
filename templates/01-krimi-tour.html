@@ -500,8 +500,12 @@
     <div class="header-content">
       <div class="header-top">
         <div class="header-titles">
+          {{#unless (isHidden 'headerLine1')}}
           <div class="header-line1" style="font-size: {{fontSize headerLine1 25 15 40}}pt">{{headerLine1}}</div>
+          {{/unless}}
+          {{#unless (isHidden 'headerLine2')}}
           <div class="header-line2" style="font-size: {{fontSize headerLine2 25 15 40}}pt">{{headerLine2}}</div>
+          {{/unless}}
         </div>
         <div class="logo-header">
           <img src="../assets/logos/WBM_Blau.svg" alt="Polizei Niedersachsen">
@@ -515,33 +519,60 @@
     {{/unless}}
 
     <!-- Overlay Text (einzeilig, zweifarbig, dynamisch skaliert) -->
+    {{#unless (isHidden 'overlayLine1')}}
     <div class="overlay-text">
       <div class="overlay-line" style="font-size: {{fitOverlayText overlayLine1 overlayLine2 56 380 formatId=_formatId instagramWidth=740 posterWidth=540}}pt">
         <span class="overlay-white">{{overlayLine1}}</span>
+        {{#unless (isHidden 'overlayLine2')}}
+        <span class="overlay-accent">{{overlayLine2}}</span>
+        {{/unless}}
+      </div>
+    </div>
+    {{else}}
+    {{#unless (isHidden 'overlayLine2')}}
+    <div class="overlay-text">
+      <div class="overlay-line" style="font-size: {{fitOverlayText '' overlayLine2 56 380 formatId=_formatId instagramWidth=740 posterWidth=540}}pt">
         <span class="overlay-accent">{{overlayLine2}}</span>
       </div>
     </div>
+    {{/unless}}
+    {{/unless}}
   </div>
 
   <!-- Yellow Box -->
+  {{#unless (isHidden 'eventTitle')}}
   <div class="yellow-box">
     <div class="box-headline" style="font-size: {{fontSize eventTitle 11 7 80}}pt">{{eventTitle}}</div>
+    {{#unless (isHidden 'eventDescription')}}
+    <div class="box-body" style="font-size: {{fontSize eventDescription 8.5 6 250}}pt">{{eventDescription}}</div>
+    {{/unless}}
+  </div>
+  {{else}}
+  {{#unless (isHidden 'eventDescription')}}
+  <div class="yellow-box">
     <div class="box-body" style="font-size: {{fontSize eventDescription 8.5 6 250}}pt">{{eventDescription}}</div>
   </div>
+  {{/unless}}
+  {{/unless}}
 
   <!-- Footer -->
   <div class="footer-section">
     <div class="event-details">
+      {{#unless (isHidden 'eventDate')}}
       <div class="event-date">{{eventDate}}</div>
+      {{/unless}}
+      {{#unless (isHidden 'locationLines')}}
       <div class="event-location">
         {{#each locationLines}}
         <div>{{this}}</div>
         {{/each}}
       </div>
+      {{/unless}}
     </div>
 
     <div class="footer-bottom">
       <div class="qr-area">
+        {{#unless (isHidden 'qrUrl')}}
         {{#if qrCodeImage}}
         <div class="qr-placeholder">
           <img src="{{qrCodeImage}}" style="width:100%;height:100%;display:block;">
@@ -554,12 +585,19 @@
           <div class="qr-corner-br"></div>
         </div>
         {{/if}}
+        {{/unless}}
+        {{#unless (isHidden 'sloganLine1')}}
         <div class="qr-slogan">
           <span class="slogan-top">{{sloganLine1}}</span>
+          {{#unless (isHidden 'sloganLine2')}}
           <span class="slogan-bottom">{{sloganLine2}}</span>
+          {{/unless}}
         </div>
+        {{/unless}}
       </div>
+      {{#unless (isHidden 'ctaText')}}
       <div class="stamp-cta" style="font-size: {{ctaFontSize ctaText 26 18}}pt">{{{ctaLines ctaText maxChars=9}}}</div>
+      {{/unless}}
     </div>
   </div>
 

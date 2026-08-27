@@ -52,12 +52,7 @@ export default function EditorPage() {
     setRenderLoading(true);
     setError(null);
 
-    // Filter out hidden fields
-    const filteredData = Object.fromEntries(
-      Object.entries(formData).filter(([key]) => !hiddenFields[key])
-    );
-
-    renderFlyer(selectedTemplate.id, filteredData, 'png', selectedFormat)
+    renderFlyer(selectedTemplate.id, formData, 'png', selectedFormat, hiddenFields)
       .then((blob) => {
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         const url = URL.createObjectURL(blob);
@@ -72,7 +67,7 @@ export default function EditorPage() {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(triggerRender, 800);
     return () => clearTimeout(debounceRef.current);
-  }, [formData, selectedTemplate, selectedFormat]);
+  }, [formData, selectedTemplate, selectedFormat, hiddenFields]);
 
   // Manual refresh
   const handleRefresh = () => {
@@ -85,12 +80,7 @@ export default function EditorPage() {
     if (!selectedTemplate) return;
     setRenderLoading(true);
     try {
-      // Filter out hidden fields
-      const filteredData = Object.fromEntries(
-        Object.entries(formData).filter(([key]) => !hiddenFields[key])
-      );
-
-      const blob = await renderFlyer(selectedTemplate.id, filteredData, format, selectedFormat);
+      const blob = await renderFlyer(selectedTemplate.id, formData, format, selectedFormat, hiddenFields);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

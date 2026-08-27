@@ -373,7 +373,9 @@
   <div class="photo-section">
     <div class="photo-top-gradient"></div>
     <div class="photo-header">
+      {{#unless (isHidden 'ctaText')}}
       <div class="stamp-cta" style="font-size: 7pt">{{{ctaLines ctaText}}}</div>
+      {{/unless}}
     </div>
 
     <div class="logo-center">
@@ -393,10 +395,14 @@
 
   <!-- Text Panel -->
   <div class="text-panel">
+    {{#unless (isHidden 'titleMain')}}
     <div class="panel-headline" style="font-size: {{fontSize titleMain 18 10 40}}pt">{{titleMain}}</div>
+    {{/unless}}
+    {{#unless (isHidden 'tagline')}}
     <div class="yellow-bar">
       <span class="bar-alles">{{tagline}}</span>
     </div>
+    {{/unless}}
   </div>
 
   <!-- Footer Bar -->
@@ -407,6 +413,7 @@
     </div>
     <div class="footer-sicher">sicher.</div>
     <div class="footer-h">H</div>
+    {{#unless (isHidden 'qrUrl')}}
     {{#if qrCodeImage}}
     <div class="footer-qr">
       <img src="{{qrCodeImage}}" style="width:100%;height:100%;display:block;">
@@ -414,6 +421,7 @@
     {{else}}
     <div class="footer-qr"></div>
     {{/if}}
+    {{/unless}}
   </div>
 
   <!-- Stern -->
