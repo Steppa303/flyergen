@@ -1,8 +1,9 @@
 # FlyerGen — HANDOVER
 
-**Datum:** 2026-08-26 (updated 20:30)
+**Datum:** 2026-08-27 (updated 07:46)
 **Status:** Deployed & Aktiv
 **URL:** https://flyergen.steppa.online
+**Repo:** https://github.com/Steppa303/flyergen
 
 ## Was ist FlyerGen?
 
@@ -361,11 +362,21 @@ flyergen/
 - Template 02: `fitText` (je Zeile einzeln)
 - Format-spezifische Breiten (Instagram/Poster haben mehr Platz)
 
-## Nächste Schritte (potenziell)
+## Nächste Schritte
 
-- [ ] Auth (Login-Passwort)
+### Admin-Bereich (geplant, siehe `admin.md`)
+- [ ] Auth (Passwort-Abfrage bei "Verwalten"-Button)
+- [ ] Template-Editor (3 Tabs: Schema, Code, Vorschau)
+- [ ] Asset-Galerie (Logos/Bilder hochladen/verwalten)
+- [ ] SQLite-DB für Template-Metadaten + Schema
+- [ ] CodeMirror 6 Code-Editor
+
+### Sonstiges
 - [ ] Mehr Templates
-- [ ] CMYK-Support für Druck
 - [ ] wkhtmltoimage → Puppeteer (modernere Engine)
-- [ ] Template-Editor (Admin)
 - [ ] Drag & Drop Störer/CTA (verschiebbar + skalierbar)
+
+### Erledigt
+- [x] CMYK-Support für Druck (Ghostscript, 26.08.2026)
+- [x] PDF-Export (WeasyPrint, 26.08.2026)
+- [x] GitHub Repo (27.08.2026)
