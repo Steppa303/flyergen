@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Krimi-Tour — Polizeiakademie Niedersachsen</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .flyer-krimi {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header / Photo Section ---- */
+    .header-section {
+      position: relative;
+      height: 45%;
+      background: linear-gradient(
+        180deg,
+        rgba(0, 54, 96, 0.2) 0%,
+        rgba(0, 54, 96, 0.55) 55%,
+        var(--color-primary) 100%
+      );
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 10mm 12mm 5mm 12mm;
+    }
+
+    .header-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, #001a33 0%, #003660 40%, #004488 100%);
+      z-index: 0;
+    }
+
+    /* Caution tape stripe */
+    .caution-tape {
+      position: absolute;
+      top: 50%;
+      left: -5%;
+      width: 110%;
+      background: #E8D44D;
+      color: #000;
+      font-family: var(--font-body-bold);
+      font-size: 6pt;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 2mm 0;
+      transform: rotate(-2deg);
+      z-index: 4;
+      text-align: center;
+      border-top: 1px solid rgba(0,0,0,0.5);
+      border-bottom: 1px solid rgba(0,0,0,0.5);
+      white-space: nowrap;
+      overflow: hidden;
+      font-weight: bold;
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .header-titles {
+      flex: 1;
+    }
+
+    .header-line1 {
+      font-family: var(--font-headline);
+      font-size: 38pt;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      line-height: 0.95;
+      letter-spacing: 0.02em;
+    }
+
+    .header-line2 {
+      font-family: var(--font-headline);
+      font-size: 38pt;
+      color: var(--color-white);
+      text-transform: uppercase;
+      line-height: 0.95;
+      letter-spacing: 0.02em;
+    }
+
+    .logo-header {
+      width: 28mm;
+      flex-shrink: 0;
+      margin-left: 4mm;
+      margin-top: -1mm;
+    }
+
+    .logo-header img {
+      width: 100%;
+      height: auto;
+      filter: brightness(0) invert(1);
+    }
+
+    /* ---- KRIMI / TOUR Overlay ---- */
+    .overlay-text {
+      position: absolute;
+      bottom: 12%;
+      left: 0;
+      right: 0;
+      z-index: 3;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .overlay-krimi {
+      font-family: var(--font-headline);
+      font-size: 88pt;
+      color: rgba(255, 255, 255, 0.22);
+      text-transform: uppercase;
+      line-height: 0.8;
+      letter-spacing: 0.12em;
+    }
+
+    .overlay-tour {
+      font-family: var(--font-headline);
+      font-size: 88pt;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      line-height: 0.8;
+      letter-spacing: 0.12em;
+      margin-top: -4mm;
+    }
+
+    /* ---- Yellow Box ---- */
+    .yellow-box {
+      background: var(--color-accent);
+      color: var(--color-primary);
+      padding: 5mm 7mm;
+      margin: 0 12mm;
+      position: relative;
+      z-index: 2;
+      margin-top: -2mm;
+      border-radius: 2mm;
+    }
+
+    .yellow-box .box-headline {
+      font-family: var(--font-subline);
+      font-size: 11.5pt;
+      color: var(--color-primary);
+      text-transform: uppercase;
+      line-height: 1.25;
+      margin-bottom: 2.5mm;
+    }
+
+    .yellow-box .box-body {
+      font-family: var(--font-body);
+      font-size: 8.5pt;
+      color: var(--color-primary);
+      line-height: 1.5;
+    }
+
+    /* ---- Footer ---- */
+    .footer-section {
+      flex: 1;
+      background: var(--color-primary);
+      padding: 5mm 12mm 10mm 12mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .event-date {
+      font-family: var(--font-headline);
+      font-size: 28pt;
+      color: var(--color-white);
+      line-height: 1.1;
+    }
+
+    .event-location {
+      font-family: var(--font-body);
+      font-size: 8.5pt;
+      color: var(--color-white);
+      opacity: 0.85;
+      margin-top: 1.5mm;
+      line-height: 1.4;
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    /* QR Code */
+    .qr-area {
+      display: flex;
+      align-items: flex-end;
+      gap: 3mm;
+    }
+
+    .qr-placeholder {
+      width: 22mm;
+      height: 22mm;
+      position: relative;
+      background: #fff;
+      border-radius: 0.5mm;
+    }
+
+    .qr-corner-tl {
+      position: absolute;
+      top: -2mm;
+      left: -2mm;
+      width: 7mm;
+      height: 7mm;
+      border-top: 2.5px solid var(--color-accent);
+      border-left: 2.5px solid var(--color-accent);
+    }
+    .qr-corner-bl {
+      position: absolute;
+      bottom: -2mm;
+      left: -2mm;
+      width: 7mm;
+      height: 7mm;
+      border-bottom: 2.5px solid var(--color-accent);
+      border-left: 2.5px solid var(--color-accent);
+    }
+    .qr-corner-tr {
+      position: absolute;
+      top: -2mm;
+      right: -2mm;
+      width: 7mm;
+      height: 7mm;
+      border-top: 2.5px solid var(--color-accent);
+      border-right: 2.5px solid var(--color-accent);
+    }
+    .qr-corner-br {
+      position: absolute;
+      bottom: -2mm;
+      right: -2mm;
+      width: 7mm;
+      height: 7mm;
+      border-bottom: 2.5px solid var(--color-accent);
+      border-right: 2.5px solid var(--color-accent);
+    }
+
+    .qr-slogan {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5mm;
+    }
+
+    .qr-slogan .slogan-top {
+      font-family: var(--font-body);
+      font-size: 7pt;
+      color: var(--color-white);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .qr-slogan .slogan-bottom {
+      font-family: var(--font-headline);
+      font-size: 12pt;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    /* CTA Stamp — grunge style */
+    .stamp-cta {
+      width: 34mm;
+      height: 34mm;
+      border: 4px solid var(--color-accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-family: var(--font-headline);
+      font-size: 9.5pt;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      transform: rotate(-12deg);
+      line-height: 1.15;
+      padding: 3mm;
+      flex-shrink: 0;
+      position: relative;
+      box-shadow:
+        inset 0 0 0 2px var(--color-accent),
+        0 0 0 2px rgba(191,209,34,0.2),
+        3px 2px 0 rgba(191,209,34,0.08);
+      filter: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='r'%3E%3CfeTurbulence baseFrequency='0.035' numOctaves='4' seed='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='3'/%3E%3C/filter%3E%3C/svg%3E#r");
+    }
+
+    /* Stern */
+    .star-deco {
+      position: absolute;
+      bottom: 8mm;
+      right: 8mm;
+      width: 40mm;
+      opacity: 0.15;
+      z-index: 1;
+    }
+
+    .star-deco img {
+      width: 100%;
+      height: auto;
+      filter: brightness(0) invert(1);
+    }
+  </style>
+</head>
+<body>
+
+<div class="flyer-page flyer-krimi">
+
+  <!-- Header -->
+  <div class="header-section">
+    <div class="header-content">
+      <div class="header-top">
+        <div class="header-titles">
+          <div class="header-line1">DEIN FALL</div>
+          <div class="header-line2">IN HANNOVER!</div>
+        </div>
+        <div class="logo-header">
+          <img src="../assets/logos/WBM_Blau.svg" alt="Polizei Niedersachsen">
+        </div>
+      </div>
+    </div>
+
+    <!-- Caution Tape -->
+    <div class="caution-tape">POLIZEIABSPERRUNG &bull; POLIZEIABSPERRUNG &bull; POLIZEIABSPERRUNG &bull; POLIZEIABSPERRUNG &bull; POLIZEIABSPERRUNG</div>
+
+    <!-- Overlay Text -->
+    <div class="overlay-text">
+      <div class="overlay-krimi">KRIMI</div>
+      <div class="overlay-tour">TOUR</div>
+    </div>
+  </div>
+
+  <!-- Yellow Box -->
+  <div class="yellow-box">
+    <div class="box-headline">DER GOLDENE KEKS WURDE AUS DEM HANNOVERSCHEN MUSEUM GESTOHLEN!</div>
+    <div class="box-body">Schlüpft in die Rolle der Kriminalpolizei und ermittelt selbst: Tatort sichern, Spuren auswerten, Zeugenaussagen aufnehmen und die tatverdächtige Person überführen.</div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer-section">
+    <div class="event-details">
+      <div class="event-date">19. April 2026</div>
+      <div class="event-location">
+        Polizeidirektion Hannover<br>
+        Waterloostraße 9<br>
+        30169 Hannover
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="qr-area">
+        <div class="qr-placeholder">
+          <div class="qr-corner-tl"></div>
+          <div class="qr-corner-bl"></div>
+          <div class="qr-corner-tr"></div>
+          <div class="qr-corner-br"></div>
+        </div>
+        <div class="qr-slogan">
+          <span class="slogan-top">WER ERMITTELT …</span>
+          <span class="slogan-bottom">WENN NICHT DU?</span>
+        </div>
+      </div>
+      <div class="stamp-cta">MELDE DICH<br>JETZT AN!</div>
+    </div>
+  </div>
+
+  <!-- Stern -->
+  <div class="star-deco">
+    <img src="../assets/logos/stern_Blau.svg" alt="">
+  </div>
+
+</div>
+
+</body>
+</html>

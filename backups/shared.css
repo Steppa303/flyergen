@@ -1,0 +1,169 @@
+/* ============================================
+   FlyerGen — Shared Styles
+   Polizeiakademie Niedersachsen
+   ============================================ */
+
+/* ---------- Fonts ---------- */
+@font-face {
+  font-family: 'DIN1451Engschrift';
+  src: url('../assets/fonts/DIN1451Engschrift.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- CSS Variables ---------- */
+:root {
+  /* Farben */
+  --color-primary: #003660;
+  --color-primary-dark: #002D4F;
+  --color-accent: #BFD122;
+  --color-accent-muted: #99A71B;
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+  --color-gray: #F5F5F5;
+  --color-logo-blue: #345077;
+
+  /* Fonts */
+  --font-headline: 'DIN1451Engschrift', 'DIN Condensed', 'Arial Narrow', sans-serif;
+  --font-subline: 'DINCondensed-Bold', 'DIN Condensed', 'Arial Narrow', sans-serif;
+  --font-body: 'FrutigerNeueLTPro-Cn', 'Frutiger', 'Helvetica Neue', sans-serif;
+  --font-body-bold: 'FrutigerNeueLTPro-CnBold', 'Frutiger', 'Helvetica Neue', sans-serif;
+
+  /* Abstände */
+  --spacing-page: 15mm;
+  --spacing-content: 10mm;
+  --spacing-line: 1.5;
+
+  /* A5 Hochformat */
+  --page-width: 148mm;
+  --page-height: 210mm;
+}
+
+/* ---------- Page Setup ---------- */
+@page {
+  size: A5 portrait;
+  margin: 0;
+}
+
+/* ---------- Reset ---------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  color-adjust: exact;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-gray);
+  font-family: var(--font-body);
+  color: var(--color-white);
+  line-height: var(--spacing-line);
+}
+
+/* ---------- Flyer Page ---------- */
+.flyer-page {
+  width: var(--page-width);
+  height: var(--page-height);
+  background: var(--color-primary);
+  position: relative;
+  overflow: hidden;
+  page-break-after: always;
+  page-break-inside: avoid;
+}
+
+/* Screen preview sizing */
+@media screen {
+  .flyer-page {
+    width: 520px;
+    height: 736px;
+    margin: 20px auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* ---------- Typography ---------- */
+.headline {
+  font-family: var(--font-headline);
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.0;
+}
+
+.subline {
+  font-family: var(--font-subline);
+  color: var(--color-white);
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.subline-accent {
+  font-family: var(--font-subline);
+  color: var(--color-accent);
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.body-text {
+  font-family: var(--font-body);
+  color: var(--color-white);
+  line-height: var(--spacing-line);
+}
+
+.body-bold {
+  font-family: var(--font-body-bold);
+  color: var(--color-white);
+  line-height: var(--spacing-line);
+}
+
+/* ---------- Logo ---------- */
+.logo-container {
+  position: absolute;
+}
+
+.logo-container svg {
+  height: 100%;
+  width: auto;
+}
+
+.logo-white svg path,
+.logo-white svg .st1 {
+  fill: var(--color-white) !important;
+}
+
+/* ---------- Stern ---------- */
+.star-lime svg path,
+.star-lime svg .st1 {
+  fill: var(--color-accent) !important;
+}
+
+/* ---------- Stamp / CTA ---------- */
+.stamp {
+  border: 3px solid var(--color-accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--font-subline);
+  color: var(--color-accent);
+  text-transform: uppercase;
+  transform: rotate(-12deg);
+  padding: 8px;
+}
+
+/* ---------- Utility ---------- */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+.text-accent { color: var(--color-accent); }
+.bg-primary { background-color: var(--color-primary); }
+.bg-accent { background-color: var(--color-accent); }
