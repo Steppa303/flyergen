@@ -2,8 +2,12 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const QRCode = require('qrcode');
+const multer = require('multer');
 const FlyerRenderer = require('./renderer');
 const { upload, processImage, UPLOAD_DIR, THUMBS_DIR } = require('./upload');
+const { parseCsv } = require('./namebadge/csv-parser');
+const { extractBackground, extractBackside } = require('./namebadge/background-extractor');
+const { renderBadges, renderPreview } = require('./namebadge/badge-renderer');
 
 const app = express();
 const renderer = new FlyerRenderer();
@@ -266,8 +270,295 @@ app.delete('/api/images/:filename', (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3010;
-app.listen(PORT, () => {
-  console.log(`FlyerGen API running on port ${PORT}`);
-  console.log(`Templates: ${Object.keys(templateSchemas).join(', ')}`);
+// ============================================================
+// NameBadge API Endpoints
+// ============================================================
+
+const NAMEBADGE_UPLOAD_DIR = path.join(__dirname, '../uploads/namebadge');
+fs.mkdirSync(NAMEBADGE_UPLOAD_DIR, { recursive: true });
+
+// Multer storage for namebadge uploads
+const namebadgeStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, NAMEBADGE_UPLOAD_DIR),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const name = `nb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}${ext}`;
+    cb(null, name);
+  }
 });
+
+const namebadgeUploadBg = multer({
+  storage: namebadgeStorage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['.pdf', '.png', '.jpg', '.jpeg'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!allowed.includes(ext)) {
+      return cb(new Error('Nicht erlaubter Dateityp. Erlaubt: PDF, PNG, JPG'));
+    }
+    cb(null, true);
+  }
+});
+
+const namebadgeUploadCsv = multer({
+  storage: namebadgeStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!['.csv'].includes(ext)) {
+      return cb(new Error('Nicht erlaubter Dateityp. Erlaubt: CSV'));
+    }
+    cb(null, true);
+  }
+});
+
+// GET /api/namebadge/backgrounds — List available background templates
+app.get('/api/namebadge/backgrounds', (req, res) => {
+  try {
+    const templatesPath = path.join(__dirname, 'namebadge/templates/index.json');
+    const data = JSON.parse(fs.readFileSync(templatesPath, 'utf8'));
+    res.json(data);
+  } catch (err) {
+    console.error('List backgrounds error:', err);
+    res.json({ templates: [] });
+  }
+});
+
+// Static serving for namebadge templates
+app.use('/api/namebadge/templates', express.static(
+  path.join(__dirname, 'namebadge/templates')
+));
+
+// POST /api/namebadge/upload-background — Upload background image
+app.post('/api/namebadge/upload-background', (req, res, next) => {
+  namebadgeUploadBg.single('file')(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ error: 'Datei zu groß (max. 20MB)' });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Keine Datei hochgeladen' });
+  }
+
+  try {
+    const hasBleed = req.body.hasBleed === 'true' || req.body.hasBleed === true;
+    const bleedSize = parseFloat(req.body.bleedSize) || 0;
+
+    const result = await extractBackground(req.file.path, { hasBleed, bleedSize });
+
+    // Clean up original upload
+    try { fs.unlinkSync(req.file.path); } catch (_) {}
+
+    // Return URL relative to uploads
+    const bgUrl = `/uploads/namebadge/${path.basename(result.backgroundPath)}`;
+
+    res.json({
+      success: true,
+      backgroundUrl: bgUrl,
+      width: result.width,
+      height: result.height,
+      bleedRemoved: hasBleed && bleedSize > 0,
+      bleedSize: hasBleed ? bleedSize : 0,
+      pages: result.pages,
+    });
+  } catch (err) {
+    console.error('Background upload error:', err);
+    try { fs.unlinkSync(req.file.path); } catch (_) {}
+    res.status(500).json({ error: err.message || 'Hintergrund-Verarbeitung fehlgeschlagen' });
+  }
+});
+
+// POST /api/namebadge/upload-backside — Upload back side image
+app.post('/api/namebadge/upload-backside', (req, res, next) => {
+  namebadgeUploadBg.single('file')(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ error: 'Datei zu groß (max. 20MB)' });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Keine Datei hochgeladen' });
+  }
+
+  try {
+    const result = await extractBackside(req.file.path);
+
+    // Clean up original upload
+    try { fs.unlinkSync(req.file.path); } catch (_) {}
+
+    const backUrl = `/uploads/namebadge/${path.basename(result.backSidePath)}`;
+
+    res.json({
+      success: true,
+      backSideUrl: backUrl,
+    });
+  } catch (err) {
+    console.error('Backside upload error:', err);
+    try { fs.unlinkSync(req.file.path); } catch (_) {}
+    res.status(500).json({ error: err.message || 'Rückseiten-Verarbeitung fehlgeschlagen' });
+  }
+});
+
+// POST /api/namebadge/upload-csv — Upload and parse CSV
+// Supports optional columnMapping in form field for manual column mapping
+app.post('/api/namebadge/upload-csv', (req, res, next) => {
+  namebadgeUploadCsv.single('file')(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ error: 'CSV zu groß (max. 5MB)' });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Keine CSV-Datei hochgeladen' });
+  }
+
+  try {
+    const buffer = fs.readFileSync(req.file.path);
+
+    // Parse optional columnMapping from form field (JSON string)
+    let columnMapping = null;
+    if (req.body.columnMapping) {
+      try {
+        columnMapping = JSON.parse(req.body.columnMapping);
+      } catch (_) {
+        return res.status(400).json({ error: 'Ungültiges columnMapping JSON' });
+      }
+    }
+
+    const result = parseCsv(buffer, columnMapping);
+
+    // Clean up uploaded file
+    try { fs.unlinkSync(req.file.path); } catch (_) {}
+
+    // If auto-detect failed, return headers so frontend can show mapping UI
+    if (result.needsMapping) {
+      return res.json({
+        success: false,
+        needsMapping: true,
+        headers: result.headers,
+        delimiter: result.delimiter,
+      });
+    }
+
+    res.json({
+      success: true,
+      participants: result.participants,
+      total: result.total,
+      delimiter: result.delimiter,
+    });
+  } catch (err) {
+    console.error('CSV parse error:', err);
+    try { fs.unlinkSync(req.file.path); } catch (_) {}
+    res.status(400).json({ error: err.message || 'CSV-Verarbeitung fehlgeschlagen' });
+  }
+});
+
+// POST /api/namebadge/render — Render all badges to PDF
+app.post('/api/namebadge/render', async (req, res) => {
+  const {
+    backgroundUrl,
+    doubleSided = false,
+    backSideUrl = null,
+    participants,
+    fields,
+    badgeSize = { width: 105, height: 148 },
+  } = req.body;
+
+  if (!backgroundUrl) {
+    return res.status(400).json({ error: 'Hintergrund fehlt' });
+  }
+  if (!participants || participants.length === 0) {
+    return res.status(400).json({ error: 'Keine Teilnehmer angegeben' });
+  }
+  if (!fields) {
+    return res.status(400).json({ error: 'Textfeld-Konfiguration fehlt' });
+  }
+
+  try {
+    const outputFile = await renderBadges({
+      backgroundUrl,
+      doubleSided,
+      backSideUrl,
+      participants,
+      fields,
+      badgeSize,
+    });
+
+    const today = new Date().toISOString().split('T')[0];
+    const downloadName = `namensschilder_${today}.pdf`;
+
+    res.download(outputFile, downloadName, (err) => {
+      try { fs.unlinkSync(outputFile); } catch (_) {}
+      if (err && !res.headersSent) {
+        console.error('Download error:', err);
+        res.status(500).json({ error: 'Download fehlgeschlagen' });
+      }
+    });
+  } catch (err) {
+    console.error('Badge render error:', err);
+    res.status(500).json({ error: err.message || 'Rendering fehlgeschlagen' });
+  }
+});
+
+// POST /api/namebadge/preview — Render single badge preview as PNG
+app.post('/api/namebadge/preview', async (req, res) => {
+  const {
+    backgroundUrl,
+    participants,
+    fields,
+    badgeSize = { width: 105, height: 148 },
+  } = req.body;
+
+  if (!backgroundUrl) {
+    return res.status(400).json({ error: 'Hintergrund fehlt' });
+  }
+  if (!participants || participants.length === 0) {
+    return res.status(400).json({ error: 'Kein Teilnehmer angegeben' });
+  }
+
+  try {
+    const outputFile = await renderPreview({
+      backgroundUrl,
+      participants: [participants[0]],
+      fields,
+      badgeSize,
+    });
+
+    res.download(outputFile, 'preview.png', (err) => {
+      try { fs.unlinkSync(outputFile); } catch (_) {}
+      if (err && !res.headersSent) {
+        console.error('Preview download error:', err);
+        res.status(500).json({ error: 'Download fehlgeschlagen' });
+      }
+    });
+  } catch (err) {
+    console.error('Badge preview error:', err);
+    res.status(500).json({ error: err.message || 'Vorschau fehlgeschlagen' });
+  }
+});
+
+const PORT = process.env.PORT || 3010;
+
+// Only start server if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`FlyerGen API running on port ${PORT}`);
+    console.log(`Templates: ${Object.keys(templateSchemas).join(', ')}`);
+    console.log(`NameBadge API: /api/namebadge/`);
+  });
+}
+
+module.exports = app;

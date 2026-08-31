@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, BadgeCheck } from 'lucide-react';
 import useStore from '../store/useStore';
 import { fetchTemplates } from '../api/client';
 import TemplateGrid from '../components/TemplateGrid';
@@ -76,6 +76,27 @@ export default function HomePage() {
             transition={{ delay: 0.3 }}
           >
             <TemplateGrid templates={templates} onSelect={handleSelect} />
+
+            {/* NameBadge Generator Link */}
+            <div className="mt-8">
+              <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">
+                Weitere Tools
+              </h2>
+              <button
+                onClick={() => navigate('/namensschild')}
+                className="glass-card-hover p-5 flex items-center gap-4 w-full text-left"
+              >
+                <div className="w-12 h-12 rounded-xl bg-lime/10 flex items-center justify-center flex-shrink-0">
+                  <BadgeCheck className="w-6 h-6 text-lime" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">Namensschild-Generator</h3>
+                  <p className="text-white/50 text-sm mt-0.5">
+                    Lanyard-Einleger automatisiert erstellen — CSV-Upload, Drag & Drop, PDF-Export
+                  </p>
+                </div>
+              </button>
+            </div>
           </motion.div>
         )}
       </main>

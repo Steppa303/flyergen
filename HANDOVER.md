@@ -1,6 +1,6 @@
 # FlyerGen — HANDOVER
 
-**Datum:** 2026-08-27 (updated 09:56)
+**Datum:** 2026-08-31 (updated 13:55)
 **Status:** Deployed & Aktiv
 **URL:** https://flyergen.steppa.online
 **Repo:** https://github.com/Steppa303/flyergen
@@ -9,6 +9,8 @@
 
 Formular-basierter Flyer/Plakat-Generator für die Polizeiakademie Niedersachsen.
 User wählt ein Template, füllt Felder aus, lädt ggf. ein Bild hoch, sieht live eine Vorschau und exportiert als PNG oder PDF.
+
+**Seit 31.08.2026:** Namensschild-Generator (Lanyard-Einleger) als zweites Feature.
 
 ## Aktueller Stand (27.08.2026, updated 09:56)
 
@@ -391,7 +393,14 @@ flyergen/
 ├── src/
 │   ├── server.js          # Express API (Port 3010)
 │   ├── renderer.js        # Handlebars + wkhtmltoimage + fontSize-Helper
-│   └── upload.js          # Multer + Sharp Bildverarbeitung
+│   ├── upload.js          # Multer + Sharp Bildverarbeitung
+│   └── namebadge/
+│       ├── csv-parser.js              # CSV-Parsing + Encoding-Detection
+│       ├── background-extractor.js    # PDF/PNG/JPG → Hintergrund (Crop)
+│       ├── badge-renderer.js          # HTML-Template + WeasyPrint → PDF
+│       └── templates/
+│           ├── index.json             # Vorlagen-Metadaten
+│           └── .gitkeep
 ├── templates/
 │   ├── shared.css         # Shared Styles (Fonts, Variablen, Reset)
 │   ├── 01-krimi-tour.html # Template 1 (mit Format-Overrides im <style>)
@@ -399,16 +408,28 @@ flyergen/
 │   └── 03-pol-informatik.html
 ├── frontend/
 │   └── src/
-│       ├── store/useStore.js    # Zustand State (inkl. selectedFormat, formats)
-│       ├── pages/EditorPage.jsx # Editor mit Format-Tabs
+│       ├── store/
+│       │   ├── useStore.js            # Zustand State (Flyer)
+│       │   └── useNameBadgeStore.js   # Zustand State (Namensschilder)
+│       ├── pages/
+│       │   ├── EditorPage.jsx         # Flyer-Editor mit Format-Tabs
+│       │   └── NameBadgePage.jsx      # Namensschild Step-Wizard
 │       ├── components/
-│       │   ├── ExportButtons.jsx # Export mit Format-Anzeige
+│       │   ├── ExportButtons.jsx      # Export mit Format-Anzeige
 │       │   ├── Preview.jsx
 │       │   ├── FormField.jsx
-│       │   └── ImageUpload.jsx
+│       │   ├── ImageUpload.jsx
+│       │   └── NameBadge/
+│       │       ├── BackgroundSelector.jsx
+│       │       ├── CsvUpload.jsx
+│       │       ├── BadgeCanvas.jsx
+│       │       ├── TextFieldConfig.jsx
+│       │       ├── BadgePreview.jsx
+│       │       └── ParticipantTable.jsx
 │       └── api/client.js        # renderFlyer(templateId, data, format, formatId)
 ├── assets/                # Logos, Fonts
 ├── uploads/               # Hochgeladene Bilder
+├── namen.md               # Namensschild-Generator Planung
 └── deploy.sh              # Build + Deploy Script
 ```
 
@@ -439,6 +460,100 @@ flyergen/
 - Template 02: `fitText` (je Zeile einzeln)
 - Format-spezifische Breiten (Instagram/Poster haben mehr Platz)
 
+---
+
+## Namensschild-Generator (31.08.2026)
+
+**Route:** `/namensschild`
+**Status:** ✅ Implementiert (Frontend + Backend)
+**Plan:** `namen.md` (ausführliche Planung)
+
+### Was
+
+Automatisierte Erstellung von Lanyard-Einlegern (Namensschilder, A6: 105×148mm).
+User lädt CSV mit Teilnehmerdaten hoch, platziert Textfelder per Drag & Drop, generiert ein PDF mit allen Schildern.
+
+### Workflow
+
+1. **Hintergrund** — Upload (PDF/PNG/JPG) mit optionaler Beschnittzugabe + optionale Rückseite
+2. **CSV-Upload** — Auto-Encoding-Erkennung (UTF-8, Latin-1, Windows-1252, CP850), Auto-Trennzeichen-Erkennung, Spalten-Mapping bei Abweichungen
+3. **Platzierung** — Interaktiver Canvas (Zoom, Drag & Drop) + Druckvorschau (1:1)
+4. **Generierung** — WeasyPrint Multi-Page PDF (einseitig + beidseitig)
+
+### Features
+
+- **CSV-Parsing** — Auto-Encoding (UTF-8/Latin-1/Win-1252/CP850), Auto-Trennzeichen (Komma/Semikolon), UTF-8 BOM
+- **Spalten-Mapping** — Bei nicht erkannten Spaltenköpfen → Dropdown-Zuordnung durch User
+- **Längster-Text-Vorschau** — Canvas zeigt längsten Wert je Spalte (worst-case Layout)
+- **Druckvorschau (1:1)** — CSS-basiert in exakter Druckgröße (mm/pt), identisch zum PDF-Rendering
+- **Drag & Drop** — Textfelder verschiebbar + Resize-Handle für Breite
+- **Textfeld-Konfiguration** — Schriftart, Größe, Farbe, Ausrichtung, Zeilenhöhe, Buchstabenabstand
+- **Beschnittzugabe** — User kann mm-Angabe beim PDF-Upload angeben → automatischer Crop
+- **Beidseitig** — Optionale Rückseiten-Grafik (nur Bild, kein Text)
+- **Max. 500 Teilnehmer**
+
+### Tech
+
+| Komponente | Tech |
+|------------|------|
+| CSV-Parser | `papaparse` + Custom Encoding-Detection |
+| Background-Extractor | `pdftoppm` (poppler-utils) + `sharp` |
+| Badge-Renderer | Handlebars HTML-Template + WeasyPrint |
+| Preview | `wkhtmltoimage` (PNG) |
+| Frontend | React + Zustand + TailwindCSS + Framer Motion |
+| Drag & Drop | Custom (onMouseDown/Move/Up) |
+| Color-Picker | `react-colorful` |
+
+### Dateien
+
+```
+src/
+├── namebadge/
+│   ├── csv-parser.js              # CSV-Parsing + Encoding-Detection + Spalten-Mapping
+│   ├── background-extractor.js    # PDF/PNG/JPG → Hintergrund (mit Beschnitt-Crop)
+│   ├── badge-renderer.js          # HTML-Template + WeasyPrint → PDF
+│   └── templates/
+│       ├── index.json             # Vorlagen-Metadaten
+│       └── .gitkeep               # Initial leer
+frontend/src/
+├── pages/
+│   └── NameBadgePage.jsx          # Step-Wizard (4 Schritte)
+├── components/NameBadge/
+│   ├── BackgroundSelector.jsx     # Hintergrund + Beschnitt + Rückseite
+│   ├── CsvUpload.jsx              # CSV-Upload + Spalten-Mapping-UI
+│   ├── BadgeCanvas.jsx            # Interaktiver Canvas (Zoom, D&D)
+│   ├── TextFieldConfig.jsx        # Schrift-Konfiguration
+│   ├── BadgePreview.jsx           # Druckvorschau (1:1, CSS mm/pt)
+│   └── ParticipantTable.jsx       # Teilnehmer-Liste (Suche, Sort, Paginierung)
+└── store/
+    └── useNameBadgeStore.js       # Zustand Store
+```
+
+### API-Endpoints
+
+| Endpoint | Methode | Beschreibung |
+|----------|---------|-------------|
+| `/api/namebadge/backgrounds` | GET | Verfügbare Hintergrund-Vorlagen |
+| `/api/namebadge/upload-background` | POST | PDF/PNG/JPG → Hintergrund |
+| `/api/namebadge/upload-backside` | POST | Rückseiten-Grafik |
+| `/api/namebadge/upload-csv` | POST | CSV → Teilnehmer (mit optionalem columnMapping) |
+| `/api/namebadge/render` | POST | Alle Schilder → PDF |
+| `/api/namebadge/preview` | POST | Einzelnes Schild → PNG |
+
+### Bug Fixes (31.08.2026)
+
+1. **Encoding-Erkennung** — CSVs in Latin-1/Windows-1252/CP850 werden automatisch erkannt (Vergleich aller Encodings, wählt das mit den meisten deutschen Umlauten)
+2. **Spalten-Mapping** — Bei nicht erkannten Spalten → `needsMapping: true` + Frontend-Mapping-UI mit Dropdowns
+3. **`data.participants.slice` Error** — Null-Check vor `.slice()` wenn Server `needsMapping` zurückgibt
+4. **Build-Deploy** — Frontend wird nach `npm run build` nach `/var/www/apps/flyergen/` kopiert (Caddy served von dort, nicht aus `frontend/dist/`)
+5. **Import vergessen** — `BadgePreview` Import in `NameBadgePage.jsx` fehlte
+
+### Wichtig
+
+- **Deploy-Script fehlt!** Nach `npm run build` im Frontend muss `dist/` manuell nach `/var/www/apps/flyergen/` kopiert werden
+- **PM2 Process:** `flyergen` auf Port 3010
+- **Caddy:** `flyergen.steppa.online` — API + Uploads → localhost:3010, Rest → static files
+
 ## Nächste Schritte
 
 ### Admin-Bereich (geplant, siehe `admin.md`)
@@ -453,6 +568,13 @@ flyergen/
 - [ ] wkhtmltoimage → Puppeteer (modernere Engine)
 - [ ] Drag & Drop Störer/CTA (verschiebbar + skalierbar)
 
+### Namensschild-Generator
+- [ ] Hintergrund-Vorlagen befüllen (aktuell leer)
+- [ ] Deploy-Script erstellen (Build + Kopieren nach /var/www/apps/flyergen/)
+- [ ] Tests nachziehen (Backend + Frontend, siehe `namen.md`)
+- [ ] Mobile-Responsiveness (Pinch-to-Zoom, Drag-to-Pan)
+- [ ] PDF/X-4 Post-Processing (Ghostscript, optional)
+
 ### Erledigt
 - [x] CMYK-Support für Druck (Ghostscript, 26.08.2026)
 - [x] PDF-Export (WeasyPrint, 26.08.2026)
@@ -461,3 +583,7 @@ flyergen/
 - [x] Template umbenannt: Krimi-Tour → Einzel-Event (27.08.2026)
 - [x] Templates ausgeblendet: Crime Coaches + Polizei-Informatik (27.08.2026)
 - [x] Felder-Ausblenden: Flyer-Element ausblenden statt Formularzeile (27.08.2026)
+- [x] Namensschild-Generator implementiert (31.08.2026)
+- [x] CSV-Encoding-Detection (UTF-8, Latin-1, Win-1252, CP850) (31.08.2026)
+- [x] Spalten-Mapping-UI bei nicht erkannten CSV-Headern (31.08.2026)
+- [x] Druckvorschau 1:1 (CSS mm/pt, identisch zum PDF) (31.08.2026)
