@@ -1,59 +1,66 @@
 const Papa = require('papaparse');
+const iconv = require('iconv-lite');
 
 const MAX_ROWS = 500;
 const REQUIRED_COLUMNS = ['vorname', 'nachname', 'behoerde'];
 
-// Column name aliases (case-insensitive)
+// Column name aliases (case-normalized)
 const COLUMN_ALIASES = {
   vorname: ['vorname', 'vornamen', 'first name', 'firstname', 'first_name', 'name'],
   nachname: ['nachname', 'nachnamen', 'last name', 'lastname', 'last_name', 'surname', 'family name'],
-  behoerde: ['behoerde', 'behörde', 'behörde', 'behörde', 'dienststelle', 'abteilung', 'organisation', 'organization', 'department', 'agency', 'authority', 'office', 'behörde/dienststelle'],
+  behoerde: ['behoerde', 'behörde', 'dienststelle', 'abteilung', 'organisation', 'organization', 'department', 'agency', 'authority', 'office', 'behörde/dienststelle'],
 };
 
 // German umlauts and special chars to score encoding quality
 const GERMAN_CHARS = /[äöüßÄÖÜ]/g;
 
+// Encodings to try (order matters — most likely for German CSVs first)
+// macintosh = MacRoman: Mac users export CSVs in system encoding (common in German offices)
+// cp850: DOS/Windows command-line tools often use CP850
+// iso-8859-15/1: legacy Linux/Unix
+const CANDIDATE_ENCODINGS = ['windows-1252', 'macintosh', 'cp850', 'iso-8859-15', 'iso-8859-1'];
+
 /**
- * Try multiple encodings and pick the one that produces the most German umlauts.
- * This handles Latin-1, Windows-1252, CP850, ISO-8859-15, etc.
+ * Decode a CSV buffer to UTF-8 string with proper encoding detection.
+ * Uses iconv-lite for correct byte→character mapping (unlike Buffer.toString
+ * which doesn't distinguish Latin-1 from Windows-1252).
+ *
+ * Strategy:
+ * 1. Try UTF-8 — if valid and no replacement chars, use it
+ * 2. Otherwise try Windows-1252, ISO-8859-15, ISO-8859-1, CP850
+ * 3. Pick the decoding that produces the most German umlauts
  */
 function decodeBuffer(buffer) {
-  // First try UTF-8
-  let text = buffer.toString('utf8');
-  if (text.charCodeAt(0) === 0xFEFF) {
-    text = text.slice(1);
+  // Remove UTF-8 BOM if present
+  if (buffer.length >= 3 && buffer[0] === 0xEF && buffer[1] === 0xBB && buffer[2] === 0xBF) {
+    buffer = buffer.slice(3);
   }
 
-  // Count German chars in UTF-8 decode
-  const utf8Matches = text.match(GERMAN_CHARS) || [];
-  const hasReplacement = text.includes('\uFFFD');
+  // 1. Try UTF-8
+  const utf8Text = buffer.toString('utf8');
+  const hasReplacement = utf8Text.includes('\uFFFD');
+  const utf8Score = (utf8Text.match(GERMAN_CHARS) || []).length;
 
-  // If UTF-8 looks good (has umlauts or no replacement chars), use it
-  if (!hasReplacement && utf8Matches.length > 0) {
-    return text;
+  // UTF-8 is valid if no replacement chars AND (has umlauts OR is pure ASCII)
+  if (!hasReplacement) {
+    return utf8Text;
   }
 
-  // UTF-8 has issues — try other encodings
-  const encodings = ['latin1', 'windows-1252', 'iso-8859-15', 'cp850'];
-  let bestText = text;
-  let bestScore = utf8Matches.length;
+  // 2. UTF-8 has issues — try candidate encodings via iconv-lite
+  let bestText = utf8Text;
+  let bestScore = utf8Score;
 
-  for (const enc of encodings) {
+  for (const enc of CANDIDATE_ENCODINGS) {
     try {
-      const candidate = buffer.toString(enc);
-      const matches = candidate.match(GERMAN_CHARS) || [];
-      if (matches.length > bestScore) {
-        bestScore = matches.length;
+      const candidate = iconv.decode(buffer, enc);
+      const score = (candidate.match(GERMAN_CHARS) || []).length;
+      if (score > bestScore) {
+        bestScore = score;
         bestText = candidate;
       }
     } catch {
-      // encoding not supported by Buffer.toString, skip
+      // encoding not supported, skip
     }
-  }
-
-  // Remove BOM if present
-  if (bestText.charCodeAt(0) === 0xFEFF) {
-    bestText = bestText.slice(1);
   }
 
   return bestText;
@@ -95,7 +102,12 @@ function parseCsv(buffer, columnMapping = null) {
 
   const headers = result.meta.fields || [];
 
-  // 5. Build column map — either from user mapping or auto-detect
+  // 5. Normalize headers for matching (lowercase + normalize umlauts)
+  // Handles both lowercase (äöü) and uppercase (ÄÖÜ) since toLowerCase() converts ÄÖÜ→äöü
+  const normalizeForMatch = (s) => s.toLowerCase()
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+
+  // 6. Build column map — either from user mapping or auto-detect
   let columnMap = {};
 
   if (columnMapping) {
@@ -108,9 +120,10 @@ function parseCsv(buffer, columnMapping = null) {
       columnMap[target] = mappedHeader;
     }
   } else {
-    // Auto-detect via aliases
+    // Auto-detect via aliases (normalized matching for umlauts)
     for (const [target, aliases] of Object.entries(COLUMN_ALIASES)) {
-      const found = headers.find(h => aliases.includes(h.toLowerCase()));
+      const normalizedAliases = aliases.map(a => normalizeForMatch(a));
+      const found = headers.find(h => normalizedAliases.includes(normalizeForMatch(h)));
       if (found) {
         columnMap[target] = found;
       }
@@ -129,7 +142,7 @@ function parseCsv(buffer, columnMapping = null) {
     }
   }
 
-  // 6. Extract and validate data rows
+  // 7. Extract and validate data rows
   const participants = [];
   for (let i = 0; i < result.data.length; i++) {
     const row = result.data[i];
@@ -148,7 +161,7 @@ function parseCsv(buffer, columnMapping = null) {
     participants.push({ vorname, nachname, behoerde });
   }
 
-  // 7. Validate row count
+  // 8. Validate row count
   if (participants.length === 0) {
     throw new Error('CSV enthält keine Datenzeilen');
   }
