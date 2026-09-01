@@ -1,6 +1,6 @@
 # FlyerGen — HANDOVER
 
-**Datum:** 2026-08-31 (updated 13:55)
+**Datum:** 2026-09-01 (updated 10:34)
 **Status:** Deployed & Aktiv
 **URL:** https://flyergen.steppa.online
 **Repo:** https://github.com/Steppa303/flyergen
@@ -476,18 +476,19 @@ User lädt CSV mit Teilnehmerdaten hoch, platziert Textfelder per Drag & Drop, g
 ### Workflow
 
 1. **Hintergrund** — Upload (PDF/PNG/JPG) mit optionaler Beschnittzugabe + optionale Rückseite
-2. **CSV-Upload** — Auto-Encoding-Erkennung (UTF-8, Latin-1, Windows-1252, CP850), Auto-Trennzeichen-Erkennung, Spalten-Mapping bei Abweichungen
+2. **CSV-Upload** — Auto-Encoding-Erkennung (UTF-8, Windows-1252, MacRoman, CP850, ISO-8859-15/1), Auto-Trennzeichen-Erkennung, Spalten-Mapping bei Abweichungen
 3. **Platzierung** — Interaktiver Canvas (Zoom, Drag & Drop) + Druckvorschau (1:1)
 4. **Generierung** — WeasyPrint Multi-Page PDF (einseitig + beidseitig)
 
 ### Features
 
-- **CSV-Parsing** — Auto-Encoding (UTF-8/Latin-1/Win-1252/CP850), Auto-Trennzeichen (Komma/Semikolon), UTF-8 BOM
+- **CSV-Parsing** — Auto-Encoding (UTF-8/Win-1252/MacRoman/CP850/ISO-8859-15/1), Auto-Trennzeichen (Komma/Semikolon), UTF-8 BOM
 - **Spalten-Mapping** — Bei nicht erkannten Spaltenköpfen → Dropdown-Zuordnung durch User
 - **Längster-Text-Vorschau** — Canvas zeigt längsten Wert je Spalte (worst-case Layout)
 - **Druckvorschau (1:1)** — CSS-basiert in exakter Druckgröße (mm/pt), identisch zum PDF-Rendering
 - **Drag & Drop** — Textfelder verschiebbar + Resize-Handle für Breite
 - **Textfeld-Konfiguration** — Schriftart, Größe, Farbe, Ausrichtung, Zeilenhöhe, Buchstabenabstand
+- **Eyedropper/Pipette** — Farbe direkt vom Bildschirm picken (EyeDropper-API, Chrome/Edge/Opera)
 - **Beschnittzugabe** — User kann mm-Angabe beim PDF-Upload angeben → automatischer Crop
 - **Beidseitig** — Optionale Rückseiten-Grafik (nur Bild, kein Text)
 - **Max. 500 Teilnehmer**
@@ -542,11 +543,19 @@ frontend/src/
 
 ### Bug Fixes (31.08.2026)
 
-1. **Encoding-Erkennung** — CSVs in Latin-1/Windows-1252/CP850 werden automatisch erkannt (Vergleich aller Encodings, wählt das mit den meisten deutschen Umlauten)
+1. **Encoding-Erkennung** — CSVs in Latin-1/Windows-1252/CP850/MacRoman werden automatisch erkannt (Vergleich aller Encodings, wählt das mit den meisten deutschen Umlauten)
 2. **Spalten-Mapping** — Bei nicht erkannten Spalten → `needsMapping: true` + Frontend-Mapping-UI mit Dropdowns
 3. **`data.participants.slice` Error** — Null-Check vor `.slice()` wenn Server `needsMapping` zurückgibt
 4. **Build-Deploy** — Frontend wird nach `npm run build` nach `/var/www/apps/flyergen/` kopiert (Caddy served von dort, nicht aus `frontend/dist/`)
 5. **Import vergessen** — `BadgePreview` Import in `NameBadgePage.jsx` fehlte
+
+### Bug Fix: MacRoman-Encoding (01.09.2026)
+
+**Problem:** CSV von Mac exportiert → Encoding war MacRoman (nicht CP850 oder Windows-1252). Byte `0x9a` = `ö` in MacRoman, wurde aber als `š` (Win-1252) oder Control-Char (ISO-8859-1) gedeutet. Header `Behörde` nicht erkannt → `needsMapping: true` → keine Daten.
+
+**Fix:** `macintosh` (MacRoman) als zweite Encoding-Priorität in `csv-parser.js` hinzugefügt (nach Win-1252, vor CP850). Erkennung über Umlaut-Score (gleicher Algorithmus wie bei anderen Encodings).
+
+**Geänderte Datei:** `src/namebadge/csv-parser.js` — CANDIDATE_ENCODINGS erweitert, normalizeForMatch für Header-Matching beibehalten.
 
 ### Wichtig
 
@@ -584,6 +593,8 @@ frontend/src/
 - [x] Templates ausgeblendet: Crime Coaches + Polizei-Informatik (27.08.2026)
 - [x] Felder-Ausblenden: Flyer-Element ausblenden statt Formularzeile (27.08.2026)
 - [x] Namensschild-Generator implementiert (31.08.2026)
-- [x] CSV-Encoding-Detection (UTF-8, Latin-1, Win-1252, CP850) (31.08.2026)
+- [x] CSV-Encoding-Detection (UTF-8, Win-1252, MacRoman, CP850, ISO-8859-15/1) (31.08.2026, fix 01.09.2026)
 - [x] Spalten-Mapping-UI bei nicht erkannten CSV-Headern (31.08.2026)
 - [x] Druckvorschau 1:1 (CSS mm/pt, identisch zum PDF) (31.08.2026)
+- [x] Eyedropper/Pipette für Textfarbe (EyeDropper-API, Chrome/Edge) (31.08.2026)
+- [x] Druckvorschau unter Canvas statt Sidebar (31.08.2026)
