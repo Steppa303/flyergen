@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Type, AlignLeft, AlignCenter, AlignRight, Bold, Italic, Palette } from 'lucide-react';
+import { Type, AlignLeft, AlignCenter, AlignRight, Bold, Italic, Palette, Pipette } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import useNameBadgeStore from '../../store/useNameBadgeStore';
 
@@ -163,7 +163,7 @@ export default function TextFieldConfig() {
         {/* Color */}
         <div>
           <label className="label-text">Farbe</label>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setShowColorPicker(!showColorPicker)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
@@ -174,6 +174,23 @@ export default function TextFieldConfig() {
               />
               <span className="text-sm text-white/70">{field.color}</span>
             </button>
+            {window.EyeDropper && (
+              <button
+                onClick={async () => {
+                  try {
+                    const eyeDropper = new window.EyeDropper();
+                    const result = await eyeDropper.open();
+                    handleChange('color', result.sRGBHex);
+                  } catch (e) {
+                    // User cancelled — ignore
+                  }
+                }}
+                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                title="Farbe vom Bildschirm picken"
+              >
+                <Pipette className="w-4 h-4 text-white/70" />
+              </button>
+            )}
           </div>
           {showColorPicker && (
             <motion.div

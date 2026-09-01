@@ -43,7 +43,7 @@ export default function BadgePreview() {
         </h3>
       </div>
 
-      <div className="overflow-auto max-h-[600px] rounded-xl bg-white/5 p-3">
+      <div className="overflow-auto rounded-xl bg-white/5 p-3">
         {/* Badge at actual print size: 105mm × 148mm */}
         <div
           className="relative mx-auto shadow-lg"

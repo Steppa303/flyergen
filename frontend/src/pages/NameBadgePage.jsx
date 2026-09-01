@@ -175,12 +175,12 @@ export default function NameBadgePage() {
               exit={{ opacity: 0, x: 20 }}
               className="flex flex-col lg:flex-row gap-6"
             >
-              <div className="lg:w-2/3">
+              <div className="lg:w-2/3 space-y-4">
                 <BadgeCanvas />
+                <BadgePreview />
               </div>
               <div className="lg:w-1/3 space-y-4">
                 <TextFieldConfig />
-                <BadgePreview />
                 <ParticipantTable />
               </div>
             </motion.div>

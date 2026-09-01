@@ -218,6 +218,10 @@ function buildBadgeHtml({ backgroundPath, backSidePath, doubleSided, participant
     word-wrap: break-word;
     white-space: pre-wrap;
   }
+  /* Ensure German umlauts render — fallback chain covers all common fonts */
+  .text-field, .text-field * {
+    font-variant-ligatures: none;
+  }
 </style>
 </head>
 <body>
@@ -260,6 +264,10 @@ function buildSingleBadgeHtml({ backgroundPath, participant, fields, badgeSize }
     word-wrap: break-word;
     white-space: pre-wrap;
   }
+  /* Ensure German umlauts render — fallback chain covers all common fonts */
+  .text-field, .text-field * {
+    font-variant-ligatures: none;
+  }
 </style>
 </head>
 <body>
@@ -299,7 +307,7 @@ function buildBadgePage(participant, fields, bgDataUri, badgeSize, isBackSide) {
       top: ${y}mm;
       width: ${width}mm;
       font-size: ${fontSize}pt;
-      font-family: '${fontFamily}', sans-serif;
+      font-family: '${fontFamily}', 'DejaVu Sans', 'Liberation Sans', 'Noto Sans', Arial, Helvetica, sans-serif;
       font-weight: ${fontWeight};
       font-style: ${fontStyle};
       color: ${color};
