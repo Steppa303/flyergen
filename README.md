@@ -4,7 +4,7 @@
 **URL:** `https://flyergen.steppa.online`
 **Port:** 3010 (PM2: `flyergen`)
 **Angelegt:** 2026-08-24
-**Letztes Update:** 2026-08-26
+**Letztes Update:** 2026-09-03
 
 ## Konzept
 

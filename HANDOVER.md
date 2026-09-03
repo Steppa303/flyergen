@@ -1,6 +1,6 @@
 # FlyerGen — HANDOVER
 
-**Datum:** 2026-09-01 (updated 10:34)
+**Datum:** 2026-09-01 (updated 03.09.2026 15:45)
 **Status:** Deployed & Aktiv
 **URL:** https://flyergen.steppa.online
 **Repo:** https://github.com/Steppa303/flyergen
@@ -557,6 +557,36 @@ frontend/src/
 
 **Geänderte Datei:** `src/namebadge/csv-parser.js` — CANDIDATE_ENCODINGS erweitert, normalizeForMatch für Header-Matching beibehalten.
 
+### Bug Fix: PDF-Import + Vorschau (03.09.2026)
+
+**Problem 1:** PDF-Upload schlug fehl — `extractPdfVector` gab bei keinem Bleed den Original-Upload-Pfad zurück, der danach vom Server gelöscht wurde.
+
+**Problem 2:** Keine Vorschau bei PDF-Upload — `renderPreview` versuchte die PDF-Datei direkt als Data-URI ins HTML einzubetten (funktioniert nicht).
+
+**Problem 3:** Vector-Merge (PyPDF2) produzierte leere PDFs — `add_blank_page()` + `merge_page(bg)` verschluckte den Background-Content.
+
+**Durchgeführte Fixes (10:50 Uhr):**
+1. `extractPdfVector` kopiert PDF immer in Upload-Ordner (nicht nur bei Bleed)
+2. Server generiert PNG-Vorschau (150 DPI) via `pdftoppm` beim Upload → `previewUrl` in Response
+3. Frontend (`BadgeCanvas`, `BackgroundSelector`) nutzt `previewUrl` für Anzeige
+4. `renderPreview` konvertiert PDF erst zu PNG bevor es ins HTML eingebettet wird
+
+**Problem 4:** Vector-Merge (PyPDF2 `add_blank_page` + `merge_page`) produzierte leere PDFs ohne Background. Versuch mit `copy.deepcopy(bg_page)` + `add_page()` half in Tests, aber nicht zuverlässig beim User.
+
+**Entscheidung (15:25 Uhr):** Revert auf den Stand vor den Vector-Änderungen. Aktuell wird PDF über den Raster-Pipeline verarbeitet (PDF → PNG via `pdftoppm` → HTML → WeasyPrint → PDF). Vektor-Qualität geht verloren (300 DPI Raster), aber der Render funktioniert zuverlässig.
+
+**Offen:** Vector-Pipeline (PDF direkt mergen ohne Rasterisierung) ist implementiert aber deaktiviert. Benötigt zuverlässigen PyPDF2-Merge-Workaround. Siehe `merge_vector.py` und `merge_vector_double.py` für den Code.
+
+**Geanderte Dateien (reverted):**
+- `src/namebadge/background-extractor.js` — `extractPdfVector` (deaktiviert)
+- `src/namebadge/badge-renderer.js` — Vector-Pipeline in `renderBadges` (deaktiviert)
+- `src/namebadge/merge_vector.py` — PyPDF2 Single-Sided Merge (deaktiviert)
+- `src/namebadge/merge_vector_double.py` — PyPDF2 Double-Sided Merge (deaktiviert)
+- `src/server.js` — Upload-Endpoint mit Vector-Detection (reverted)
+- `frontend/src/components/NameBadge/BackgroundSelector.jsx` — `previewUrl` Support (reverted)
+- `frontend/src/components/NameBadge/BadgeCanvas.jsx` — `displayUrl` fuer PDF-Vorschau (reverted)
+- `frontend/src/store/useNameBadgeStore.js` — `previewUrl` State (reverted)
+
 ### Wichtig
 
 - **Deploy-Script fehlt!** Nach `npm run build` im Frontend muss `dist/` manuell nach `/var/www/apps/flyergen/` kopiert werden
@@ -583,6 +613,7 @@ frontend/src/
 - [ ] Tests nachziehen (Backend + Frontend, siehe `namen.md`)
 - [ ] Mobile-Responsiveness (Pinch-to-Zoom, Drag-to-Pan)
 - [ ] PDF/X-4 Post-Processing (Ghostscript, optional)
+- [ ] **Vector-Pipeline reaktivieren** — PDF direkt mergen statt zu PNG zu rastern (300 DPI Qualitätsverlust). Problem: PyPDF2 `add_blank_page` + `merge_page` verschluckt Background-Content. Code existiert in `merge_vector.py` + `merge_vector_double.py`, ist aber deaktiviert. Workaround: `copy.deepcopy(bg_page)` + `add_page()` hat in lokalen Tests funktioniert, aber nicht zuverlässig beim User. Nächster Versuch: pikepdf statt PyPDF2, oder PDF-Overlay via WeasyPrint `@page` Background.
 
 ### Erledigt
 - [x] CMYK-Support für Druck (Ghostscript, 26.08.2026)
