@@ -49,7 +49,8 @@ const templateSchemas = {
       { id: 'sloganLine2', type: 'text', label: 'Slogan Zeile 2', default: 'WENN NICHT DU?' },
       { id: 'imageUrl', type: 'image', label: 'Flyer-Bild', default: '' },
       { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' },
-      { id: 'ctaVisible', type: 'boolean', label: 'CTA-Kreis anzeigen', default: true }
+      { id: 'ctaVisible', type: 'boolean', label: 'CTA-Kreis anzeigen', default: true },
+      { id: 'starVisible', type: 'boolean', label: 'Polizei-Stern anzeigen', default: true }
     ]
   },
   '02-crime-coaches': {
@@ -97,7 +98,8 @@ const templateSchemas = {
       { id: 'sloganLine2', type: 'text', label: 'Slogan Zeile 2', default: '' },
       { id: 'imageUrl', type: 'image', label: 'Hero-Bild', default: '' },
       { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' },
-      { id: 'starVisible', type: 'boolean', label: 'Polizei-Stern anzeigen', default: true }
+      { id: 'starVisible', type: 'boolean', label: 'Polizei-Stern anzeigen', default: true },
+      { id: 'ctaVisible', type: 'boolean', label: 'CTA-Kreis anzeigen', default: true }
     ]
   },
   '03-pol-informatik': {
