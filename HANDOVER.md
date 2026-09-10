@@ -1,6 +1,6 @@
 # FlyerGen — HANDOVER
 
-**Datum:** 2026-09-01 (updated 03.09.2026 15:45)
+**Datum:** 2026-09-01 (updated 10.09.2026 10:40)
 **Status:** Deployed & Aktiv
 **URL:** https://flyergen.steppa.online
 **Repo:** https://github.com/Steppa303/flyergen
@@ -12,14 +12,47 @@ User wählt ein Template, füllt Felder aus, lädt ggf. ein Bild hoch, sieht liv
 
 **Seit 31.08.2026:** Namensschild-Generator (Lanyard-Einleger) als zweites Feature.
 
-## Aktueller Stand (27.08.2026, updated 09:56)
+## Aktueller Stand (10.09.2026)
 
-1 Template aktiv:
+2 Templates aktiv:
 - **Einzel-Event** (ehem. Krimi-Tour) — Event-Plakat mit Absperrband, Overlay-Text, Yellow Box
+- **Run with the Police** (04-run-with-police) — Lauf-Event mit Hero-Bild, Neon-Lime Akzenten, Date-Badge
 
 2 Templates ausgeblendet (`hidden: true` in server.js):
 - **Crime Coaches** — Ähnliches Layout, grüne Info-Bar
 - **Polizei-Informatik** — Anderes Layout mit Photo-Bereich, CTA Stamp
+
+### Template: Run with the Police (10.09.2026)
+
+Lauf-Event-Vorlage inspiriert von PK Emden Flyer. Dunkelblauer Hintergrund (#0A2240), Neon-Lime Akzente (#C5E014).
+
+#### Layout
+- **Hero-Section (58%):** Full-bleed Hintergrundbild mit Gradient-Overlay, Logo oben rechts (weiß)
+- **Date-Badge:** Grungy Kreis-Badge mit Datum/Uhrzeit, leicht rotiert (-8deg)
+- **Info-Section (42%):** Titel (Neon Lime), Tagline, Strecke/Treffpunkt, CTA, Disclaimer
+- **CTA-Kreis:** Grungy Störer-Kreis (wie Einzel-Event), per Toggle ausblendbar
+- **QR-Code + Slogan:** Optional, unten links
+- **Polizei-Stern:** Per Toggle ausblendbar
+
+#### Felder
+| ID | Typ | Beschreibung |
+|----|-----|---------------|
+| `titleLine` | text | Titel (z.B. "RUN WITH THE POLICE") |
+| `tagline` | text | Tagline (z.B. "Dein Lauf. Deine Fragen. Deine Zukunft.") |
+| `eventDate` | text | Datum (z.B. "30.09.26") |
+| `eventTime` | text | Uhrzeit (z.B. "17 Uhr") |
+| `strecke` | text | Strecke (z.B. "5 Kilometer") |
+| `treffpunkt` | text | Treffpunkt (z.B. "Kommissariat Emden") |
+| `ctaText` | text | Call-to-Action (z.B. "ASK THE RECRUITER – STELL DEINE FRAGEN DIREKT") |
+| `disclaimer` | text | Hinweistext (unten) |
+| `starVisible` | boolean | Polizei-Stern anzeigen (default: true) |
+| `ctaVisible` | boolean | CTA-Kreis anzeigen (default: true) |
+
+#### Technisches
+- Logo: `WBM_White.svg` (weiß auf dunklem Hintergrund, kein CSS-Filter)
+- Stern: `stern_White.svg` (weiß, 12% Opacity)
+- Date-Badge: `filter: url()` SVG feTurbulence für Grunge-Effekt
+- CTA-Kreis: Gleicher Stil wie Einzel-Event (38mm, Border, rotate -12deg)
 
 ### Template-Änderungen (26.08.2026)
 
@@ -57,11 +90,14 @@ User wählt ein Template, füllt Felder aus, lädt ggf. ein Bild hoch, sieht liv
 - Beispiel: "MELDE DICH JETZT AN" → ~20pt, füllt den Kreis gut
 
 ### Features
-- Dynamische Formulare (text, richtext, array, image)
+- Dynamische Formulare (text, richtext, array, image, **boolean**)
 - Bild-Upload + Galerie (Multer + Sharp, max 40MB)
 - Bild wird im Header als Hintergrund gerendert
 - Editierbarer Overlay-Text (overlayLine1/2)
 - **Felder-Ausblenden (Eye-Toggle)** — Blendet das Element auf dem Flyer aus, Formularzeile bleibt sichtbar aber deaktiviert (opacity-40, disabled inputs)
+- **Boolean-Toggle (An/Aus-Switch)** — Für Design-Elemente wie Polizei-Stern und CTA-Kreis. Rendered als Toggle-Button im Formular, steuert `{{#if fieldId}}` im Template
+- **Polizei-Stern Toggle** — `starVisible` (boolean) auf Einzel-Event + Run with the Police
+- **CTA-Kreis Toggle** — `ctaVisible` (boolean) auf Einzel-Event + Run with the Police
 - Polizei-Stern als Gestaltungselement (100mm, angeschnitten)
 - Absperrband verschwindet automatisch bei Bild-Upload
 - Live-Vorschau (debounced 800ms)
@@ -260,6 +296,44 @@ Eye-Toggle bei jedem Formularfeld. Blendet das **Element auf dem Flyer** aus, ni
 - Backend füllt Default-Werte für ALLE Felder (auch ausgeblendete) — Template entscheidet via `isHidden` was gerendert wird
 - Deploy: Immer `deploy.sh` nutzen (buildet Frontend + kopiert nach `/var/www/apps/flyergen/`)
 
+## Boolean-Toggle (Design-Elemente)
+
+Neuer Feldtyp `boolean` für An/Aus-Schalter von Design-Elementen. Rendert als Toggle-Button im Formular.
+
+### Verwendung im Schema (server.js)
+```js
+{ id: 'starVisible', type: 'boolean', label: 'Polizei-Stern anzeigen', default: true }
+{ id: 'ctaVisible', type: 'boolean', label: 'CTA-Kreis anzeigen', default: true }
+```
+
+### Verwendung im Template (Handlebars)
+```handlebars
+{{#if starVisible}}
+<div class="star-deco">
+  <img src="../assets/logos/stern_Blau.svg" alt="">
+</div>
+{{/if}}
+```
+
+### Frontend (FormField.jsx)
+- Rendert als horizontaler Toggle-Button (An/Aus)
+- Lime-Farben wenn aktiv, grau wenn inaktiv
+- `value === true || value === 'true'` als Check
+- Bei Hidden-State: Deaktivierter Toggle (grau, nicht klickbar)
+
+### Aktuelle Nutzung
+| Template | `starVisible` | `ctaVisible` |
+|----------|:---:|:---:|
+| Einzel-Event (01) | ✅ | ✅ |
+| Crime Coaches (02, hidden) | ❌ | ✅ |
+| Polizei-Informatik (03, hidden) | ❌ | ✅ |
+| Run with the Police (04) | ✅ | ✅ |
+
+### Wichtig
+- Default-Wert wird im Schema definiert (nicht im Frontend)
+- Backend setzt Default via `data?.[field.id] ?? field.default`
+- `{{#if boolField}}` in Handlebars — `false` und `undefined` sind beide falsy
+
 ## Auto-Schriftenverkleinerung
 
 Handlebars-Helper `fontSize` in `renderer.js`:
@@ -322,6 +396,8 @@ Handlebars-Helper in `renderer.js` die Textbreite schätzen und Font-Size automa
       { id: 'overlayLine1', type: 'text', label: 'Overlay Zeile 1', default: 'KRIMI' },
       { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' },
       { id: 'imageUrl', type: 'image', label: 'Flyer-Bild', default: '' },
+      { id: 'starVisible', type: 'boolean', label: 'Polizei-Stern anzeigen', default: true },
+      { id: 'ctaVisible', type: 'boolean', label: 'CTA-Kreis anzeigen', default: true },
       // ...
     ],
     formats: [
@@ -332,6 +408,15 @@ Handlebars-Helper in `renderer.js` die Textbreite schätzen und Font-Size automa
   }
 }
 ```
+
+### Feldtypen
+| Typ | Beschreibung |
+|-----|---------------|
+| `text` | Einzeiliges Textfeld |
+| `richtext` | Mehrzeiliges Textfeld |
+| `array` | Liste von Textfeldern (z.B. Ort-Zeilen) |
+| `image` | Bild-Upload |
+| `boolean` | An/Aus-Toggle (z.B. Design-Elemente ein/ausblenden) |
 
 ## Frontend State (Zustand + LocalStorage Persistence)
 
@@ -403,9 +488,10 @@ flyergen/
 │           └── .gitkeep
 ├── templates/
 │   ├── shared.css         # Shared Styles (Fonts, Variablen, Reset)
-│   ├── 01-krimi-tour.html # Template 1 (mit Format-Overrides im <style>)
+│   ├── 01-krimi-tour.html # Einzel-Event (mit Format-Overrides im <style>)
 │   ├── 02-crime-coaches.html
-│   └── 03-pol-informatik.html
+│   ├── 03-pol-informatik.html
+│   └── 04-run-with-police.html # Run with the Police (Hero-Bild, Neon Lime)
 ├── frontend/
 │   └── src/
 │       ├── store/

@@ -38,23 +38,30 @@ Frontend (React)          Backend (Express)           Rendering
 
 | ID | Name | Overlay-Zeilen | Besonderheiten |
 |----|------|----------------|----------------|
-| `01-krimi-tour` | Krimi-Tour | overlayLine1/2 | Absperrband (nur ohne Bild), Caution-Tape |
-| `02-crime-coaches` | Crime Coaches | overlayLine1/2 | Ähnlich Krimi-Tour |
-| `03-pol-informatik` | Polizei-Informatik | titleMain (tagline) | Photo-Bereich, CTA Stamp |
+| `01-krimi-tour` | Einzel-Event | overlayLine1/2 | Absperrband (nur ohne Bild), Caution-Tape, Yellow Box |
+| `02-crime-coaches` | Crime Coaches | overlayLine1/2 | Ähnlich Krimi-Tour (hidden) |
+| `03-pol-informatik` | Polizei-Informatik | titleMain (tagline) | Photo-Bereich, CTA Stamp (hidden) |
+| `04-run-with-police` | Run with the Police | — | Hero-Bild, Date-Badge, Neon Lime Akzente |
 
-## Features (Stand 26.08.2026)
+## Features (Stand 10.09.2026)
 
-- ✅ Template-Auswahl (3 Templates)
-- ✅ Dynamische Formulare (text, richtext, array, image)
-- ✅ Bild-Upload + Galerie (Multer + Sharp, max 10MB)
+- ✅ Template-Auswahl (2 aktiv,2 hidden)
+- ✅ Dynamische Formulare (text, richtext, array, image, **boolean**)
+- ✅ Bild-Upload + Galerie (Multer + Sharp, max 40MB)
 - ✅ Bild in Vorschau/Export (background-image im Header)
 - ✅ Editierbarer Overlay-Text (overlayLine1/2)
 - ✅ Felder ausblenden (Eye/EyeOff Toggle)
-- ✅ Polizei-Stern als Gestaltungselement (100mm, angeschnitten)
+- ✅ **Boolean-Toggle** — An/Aus-Switch für Design-Elemente (Stern, CTA-Kreis)
+- ✅ Polizei-Stern als Gestaltungselement (per Toggle ausblendbar)
+- ✅ CTA-Kreis / Störer (per Toggle ausblendbar)
 - ✅ Absperrband verschwindet bei Bild
 - ✅ Live-Vorschau (debounced, auto-render)
-- ✅ Export als PNG/PDF
+- ✅ Export als PNG/PDF (PDF/X-4 + CMYK für Druck)
 - ✅ Custom Export-Dateiname
+- ✅ QR-Code-Generierung
+- ✅ Auto-Schriftenverkleinerung
+- ✅ Dynamische Overlay-Skalierung (fitText/fitOverlayText)
+- ✅ Multiformat-Export (A5, A4, Instagram)
 - ✅ Cloudflare Proxy (HTTPS)
 
 ## Wichtige technische Einschränkungen
@@ -111,6 +118,7 @@ projects/flyergen/
 │   ├── 01-krimi-tour.html
 │   ├── 02-crime-coaches.html
 │   ├── 03-pol-informatik.html
+│   ├── 04-run-with-police.html
 │   └── shared.css
 ├── assets/                # Logos, Fonts, Shapes
 ├── uploads/               # Hochgeladene Bilder
