@@ -75,6 +75,28 @@ const templateSchemas = {
       { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' }
     ]
   },
+  '04-run-with-police': {
+    name: 'Run with the Police',
+    formats: [
+      { id: 'flyer', name: 'Flyer (A5)', width: 560, height: 793, label: 'A5 Portrait', pageWidth: '148mm', pageHeight: '210mm' },
+      { id: 'poster', name: 'Plakat (A4)', width: 793, height: 1123, label: 'A4 Portrait', pageWidth: '210mm', pageHeight: '297mm' },
+      { id: 'instagram', name: 'Instagram', width: 1080, height: 1080, label: '1080×1080', pageWidth: '1080px', pageHeight: '1080px' }
+    ],
+    fields: [
+      { id: 'titleLine', type: 'text', label: 'Titel', default: 'RUN WITH THE POLICE' },
+      { id: 'tagline', type: 'text', label: 'Tagline', default: 'Dein Lauf. Deine Fragen. Deine Zukunft.' },
+      { id: 'eventDate', type: 'text', label: 'Datum', default: '30.09.26' },
+      { id: 'eventTime', type: 'text', label: 'Uhrzeit', default: '17 Uhr' },
+      { id: 'strecke', type: 'text', label: 'Strecke', default: '5 Kilometer' },
+      { id: 'treffpunkt', type: 'text', label: 'Treffpunkt', default: 'Kommissariat Emden' },
+      { id: 'ctaText', type: 'text', label: 'Call-to-Action', default: 'ASK THE RECRUITER – STELL DEINE FRAGEN DIREKT' },
+      { id: 'disclaimer', type: 'text', label: 'Hinweis (unten)', default: 'EGAL, OB LAUFPROFI ODER ANFÄNGER – DU MUSST NUR LUST HABEN, MITZULAUFEN.' },
+      { id: 'sloganLine1', type: 'text', label: 'Slogan Zeile 1', default: '' },
+      { id: 'sloganLine2', type: 'text', label: 'Slogan Zeile 2', default: '' },
+      { id: 'imageUrl', type: 'image', label: 'Hero-Bild', default: '' },
+      { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' }
+    ]
+  },
   '03-pol-informatik': {
     name: 'Polizei-Informatik',
     hidden: true,

@@ -286,8 +286,19 @@ class FlyerRenderer {
     try {
       execSync(cmd, { stdio: 'pipe' });
     } catch (err) {
-      try { fs.unlinkSync(tmpHtml); } catch (_) {}
-      throw new Error(`${format === 'pdf' ? 'WeasyPrint' : 'wkhtmltoimage'} fehlgeschlagen: ${err.stderr?.toString() || err.message}`);
+      // WeasyPrint may segfault during cleanup after successfully generating the PDF.
+      // If the output file exists and is valid, treat it as success.
+      if (format === 'pdf' && (err.signal === 'SIGSEGV' || err.status === 139)) {
+        if (fs.existsSync(outputFile) && fs.statSync(outputFile).size > 0) {
+          console.warn('WeasyPrint segfaulted during cleanup, but PDF was generated successfully. Continuing.');
+        } else {
+          try { fs.unlinkSync(tmpHtml); } catch (_) {}
+          throw new Error(`WeasyPrint fehlgeschlagen: Segmentation fault (keine PDF-Datei erstellt)`);
+        }
+      } else {
+        try { fs.unlinkSync(tmpHtml); } catch (_) {}
+        throw new Error(`${format === 'pdf' ? 'WeasyPrint' : 'wkhtmltoimage'} fehlgeschlagen: ${err.stderr?.toString() || err.message}`);
+      }
     }
 
     // 9. PDF/X-4 Post-Processing (Ghostscript)

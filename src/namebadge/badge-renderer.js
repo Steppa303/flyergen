@@ -67,8 +67,14 @@ async function renderBadges(config) {
       { stdio: 'pipe', timeout: 120000 }
     );
   } catch (err) {
-    try { fs.unlinkSync(tmpHtml); } catch (_) {}
-    throw new Error(`WeasyPrint fehlgeschlagen: ${err.stderr?.toString() || err.message}`);
+    // WeasyPrint may segfault during cleanup after successfully generating the PDF.
+    // If the output file exists and is valid, treat it as success.
+    if ((err.signal === 'SIGSEGV' || err.status === 139) && fs.existsSync(outputFile) && fs.statSync(outputFile).size > 0) {
+      console.warn('WeasyPrint segfaulted during cleanup, but PDF was generated successfully. Continuing.');
+    } else {
+      try { fs.unlinkSync(tmpHtml); } catch (_) {}
+      throw new Error(`WeasyPrint fehlgeschlagen: ${err.stderr?.toString() || err.message}`);
+    }
   }
 
   // Cleanup temp HTML

@@ -13,7 +13,7 @@ export default function BadgePreview() {
 
   // Use longest text per column for preview (worst-case layout)
   const longestTexts = useMemo(() => {
-    const result = { vorname: '', nachname: '', behoerde: '' };
+    const result = { vorname: '', nachname: '', behoerde: '', workshop: '' };
     for (const p of participants) {
       for (const key of Object.keys(result)) {
         if ((p[key] || '').length > result[key].length) {

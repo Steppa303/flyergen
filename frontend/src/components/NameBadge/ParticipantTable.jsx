@@ -21,7 +21,8 @@ export default function ParticipantTable() {
         (p) =>
           p.vorname.toLowerCase().includes(q) ||
           p.nachname.toLowerCase().includes(q) ||
-          p.behoerde.toLowerCase().includes(q)
+          p.behoerde.toLowerCase().includes(q) ||
+          (p.workshop && p.workshop.toLowerCase().includes(q))
       );
     }
 
@@ -61,6 +62,8 @@ export default function ParticipantTable() {
   };
 
   if (participants.length === 0) return null;
+
+  const hasWorkshop = participants.some(p => p.workshop);
 
   return (
     <div className="glass-card p-4">
@@ -106,6 +109,14 @@ export default function ParticipantTable() {
               >
                 Behörde <SortIcon col="behoerde" />
               </th>
+              {hasWorkshop && (
+                <th
+                  className="text-left py-2 px-2 text-white/50 font-medium cursor-pointer hover:text-white/70"
+                  onClick={() => handleSort('workshop')}
+                >
+                  Workshop <SortIcon col="workshop" />
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -124,6 +135,9 @@ export default function ParticipantTable() {
                   <td className="py-1.5 px-2 text-white/80 truncate max-w-[100px]">{row.vorname}</td>
                   <td className="py-1.5 px-2 text-white/80 truncate max-w-[100px]">{row.nachname}</td>
                   <td className="py-1.5 px-2 text-white/60 truncate max-w-[150px]">{row.behoerde}</td>
+                  {hasWorkshop && (
+                    <td className="py-1.5 px-2 text-white/60 truncate max-w-[150px]">{row.workshop || ''}</td>
+                  )}
                 </tr>
               );
             })}

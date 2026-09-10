@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run with the Police — Polizeiakademie Niedersachsen</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .flyer-rwp {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* ---- Hero Section (Top 60%) ---- */
+    .hero-section {
+      position: relative;
+      height: 58%;
+      background: linear-gradient(
+        180deg,
+        rgba(10, 34, 64, 0.1) 0%,
+        rgba(10, 34, 64, 0.4) 60%,
+        rgba(10, 34, 64, 0.85) 85%,
+        #0A2240 100%
+      );
+      overflow: hidden;
+    }
+
+    .hero-section.has-image {
+      background: none;
+    }
+
+    /* Fallback gradient when no image */
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background: linear-gradient(135deg, #0A2240 0%, #132d54 50%, #1a3a6b 100%);
+      z-index: 0;
+    }
+
+    .hero-section.has-image::before {
+      display: none;
+    }
+
+    .hero-bg-image {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background-size: cover;
+      background-position: center;
+      z-index: 0;
+    }
+
+    .hero-bg-overlay {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(10, 34, 64, 0.05) 0%,
+        rgba(10, 34, 64, 0.2) 40%,
+        rgba(10, 34, 64, 0.65) 70%,
+        #0A2240 100%
+      );
+      z-index: 1;
+    }
+
+    /* Top gradient for logo visibility */
+    .hero-top-gradient {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      height: 40%;
+      background: linear-gradient(
+        180deg,
+        rgba(10, 34, 64, 0.7) 0%,
+        rgba(10, 34, 64, 0.3) 50%,
+        transparent 100%
+      );
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-start;
+      padding: 8mm 10mm 0 10mm;
+      height: 100%;
+    }
+
+    /* Logo top-right */
+    .logo-rwp {
+      width: 42mm;
+      flex-shrink: 0;
+    }
+
+    .logo-rwp img {
+      width: 100%;
+      height: auto;
+    }
+
+    /* Date badge — grungy circle */
+    .date-badge {
+      position: absolute;
+      right: 10mm;
+      top: 50%;
+      transform: translateY(-50%) rotate(-8deg);
+      width: 32mm;
+      height: 32mm;
+      border: 3px solid var(--color-accent);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 4;
+      box-shadow:
+        inset 0 0 0 2px var(--color-accent),
+        0 0 0 2px rgba(197, 224, 20, 0.2),
+        3px 2px 0 rgba(197, 224, 20, 0.08);
+      filter: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='r'%3E%3CfeTurbulence baseFrequency='0.035' numOctaves='4' seed='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='3'/%3E%3C/filter%3E%3C/svg%3E#r");
+    }
+
+    .date-badge .badge-date {
+      font-family: var(--font-headline);
+      font-size: 14pt;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .date-badge .badge-time {
+      font-family: var(--font-body-bold);
+      font-size: 11pt;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      line-height: 1;
+      margin-top: 1mm;
+    }
+
+    /* ---- Info Section (Bottom 42%) ---- */
+    .info-section {
+      flex: 1;
+      background: #0A2240;
+      padding: 8mm 12mm 6mm 12mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      position: relative;
+      z-index: 2;
+    }
+
+    .rwp-title {
+      font-family: var(--font-headline);
+      font-size: 42pt;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      line-height: 0.95;
+      letter-spacing: 0.04em;
+      margin-bottom: 3mm;
+    }
+
+    .rwp-tagline {
+      font-family: var(--font-body-bold);
+      font-size: 12pt;
+      color: var(--color-white);
+      text-transform: uppercase;
+      line-height: 1.3;
+      letter-spacing: 0.05em;
+      margin-bottom: 5mm;
+    }
+
+    .info-details {
+      display: flex;
+      gap: 8mm;
+      margin-bottom: 5mm;
+    }
+
+    .info-detail-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-label {
+      font-family: var(--font-body-bold);
+      font-size: 8pt;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      line-height: 1.4;
+    }
+
+    .info-value {
+      font-family: var(--font-body);
+      font-size: 9pt;
+      color: var(--color-white);
+      line-height: 1.4;
+    }
+
+    .rwp-cta {
+      font-family: var(--font-headline);
+      font-size: 16pt;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      line-height: 1.1;
+      letter-spacing: 0.04em;
+      margin-bottom: 4mm;
+    }
+
+    .rwp-disclaimer {
+      font-family: var(--font-body);
+      font-size: 6.5pt;
+      color: var(--color-white);
+      opacity: 0.75;
+      text-transform: uppercase;
+      line-height: 1.4;
+      letter-spacing: 0.03em;
+    }
+
+    /* QR Code area */
+    .qr-area-rwp {
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+      margin-top: auto;
+      padding-top: 3mm;
+    }
+
+    .qr-placeholder-rwp {
+      width: 20mm;
+      height: 20mm;
+      position: relative;
+      background: #fff;
+      border-radius: 0.5mm;
+    }
+
+    .qr-corner-rwp {
+      position: absolute;
+      width: 6mm;
+      height: 6mm;
+    }
+    .qr-corner-rwp.tl { top: -2mm; left: -2mm; border-top: 2.5px solid var(--color-accent); border-left: 2.5px solid var(--color-accent); }
+    .qr-corner-rwp.bl { bottom: -2mm; left: -2mm; border-bottom: 2.5px solid var(--color-accent); border-left: 2.5px solid var(--color-accent); }
+    .qr-corner-rwp.tr { top: -2mm; right: -2mm; border-top: 2.5px solid var(--color-accent); border-right: 2.5px solid var(--color-accent); }
+    .qr-corner-rwp.br { bottom: -2mm; right: -2mm; border-bottom: 2.5px solid var(--color-accent); border-right: 2.5px solid var(--color-accent); }
+
+    .qr-slogan-rwp {
+      display: flex;
+      flex-direction: column;
+      margin-left: 3mm;
+    }
+
+    .qr-slogan-rwp .slogan-top {
+      font-family: var(--font-body);
+      font-size: 6pt;
+      color: var(--color-white);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .qr-slogan-rwp .slogan-bottom {
+      font-family: var(--font-headline);
+      font-size: 10pt;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    /* Stern deco */
+    .star-deco-rwp {
+      position: absolute;
+      bottom: -27%;
+      right: -27%;
+      width: 90%;
+      opacity: 0.12;
+      z-index: 1;
+    }
+
+    .star-deco-rwp img {
+      width: 100%;
+      height: auto;
+    }
+
+    /* ---- Instagram Format (1080×1080) ---- */
+    .format-instagram .flyer-page {
+      width: 1080px;
+      height: 1080px;
+    }
+    .format-instagram .hero-section {
+      height: 55%;
+    }
+    .format-instagram .hero-content {
+      padding: 5% 6% 0 6%;
+    }
+    .format-instagram .logo-rwp {
+      width: 57mm;
+    }
+    .format-instagram .date-badge {
+      right: 6%;
+      width: 42mm;
+      height: 42mm;
+    }
+    .format-instagram .date-badge .badge-date {
+      font-size: 18pt;
+    }
+    .format-instagram .date-badge .badge-time {
+      font-size: 14pt;
+    }
+    .format-instagram .info-section {
+      padding: 5% 6% 4% 6%;
+    }
+    .format-instagram .rwp-title {
+      font-size: 56pt;
+    }
+    .format-instagram .rwp-tagline {
+      font-size: 16pt;
+    }
+    .format-instagram .info-label {
+      font-size: 11pt;
+    }
+    .format-instagram .info-value {
+      font-size: 12pt;
+    }
+    .format-instagram .rwp-cta {
+      font-size: 22pt;
+    }
+    .format-instagram .rwp-disclaimer {
+      font-size: 9pt;
+    }
+    .format-instagram .qr-placeholder-rwp {
+      width: 28mm;
+      height: 28mm;
+    }
+
+    /* ---- Poster Format (A4 — 793×1123) ---- */
+    .format-poster .flyer-page {
+      width: 793px;
+      height: 1123px;
+    }
+    .format-poster .hero-content {
+      padding: 10mm 14mm 0 14mm;
+    }
+    .format-poster .logo-rwp {
+      width: 54mm;
+    }
+    .format-poster .date-badge {
+      right: 14mm;
+      width: 38mm;
+      height: 38mm;
+    }
+    .format-poster .date-badge .badge-date {
+      font-size: 16pt;
+    }
+    .format-poster .date-badge .badge-time {
+      font-size: 13pt;
+    }
+    .format-poster .info-section {
+      padding: 10mm 16mm 8mm 16mm;
+    }
+    .format-poster .rwp-title {
+      font-size: 52pt;
+    }
+    .format-poster .rwp-tagline {
+      font-size: 15pt;
+    }
+    .format-poster .info-label {
+      font-size: 10pt;
+    }
+    .format-poster .info-value {
+      font-size: 11pt;
+    }
+    .format-poster .rwp-cta {
+      font-size: 20pt;
+    }
+    .format-poster .rwp-disclaimer {
+      font-size: 8pt;
+    }
+    .format-poster .qr-placeholder-rwp {
+      width: 24mm;
+      height: 24mm;
+    }
+  </style>
+</head>
+<body>
+
+<div class="flyer-page flyer-rwp">
+
+  <!-- Hero Section (Bild) -->
+  <div class="hero-section{{#if imageUrl}} has-image{{/if}}">
+    {{#if imageUrl}}
+    <div class="hero-bg-image" style="background-image: url('{{imageUrl}}')"></div>
+    <div class="hero-bg-overlay"></div>
+    <div class="hero-top-gradient"></div>
+    {{/if}}
+
+    <div class="hero-content">
+      <div class="logo-rwp">
+        <img src="../assets/logos/WBM_White.svg" alt="Polizei Niedersachsen">
+      </div>
+    </div>
+
+    <!-- Date Badge -->
+    {{#unless (isHidden 'eventDate')}}
+    <div class="date-badge">
+      {{#unless (isHidden 'eventDate')}}
+      <span class="badge-date" style="font-size: {{fontSize eventDate 14 10 20}}pt">{{eventDate}}</span>
+      {{/unless}}
+      {{#unless (isHidden 'eventTime')}}
+      <span class="badge-time" style="font-size: {{fontSize eventTime 11 8 15}}pt">{{eventTime}}</span>
+      {{/unless}}
+    </div>
+    {{/unless}}
+  </div>
+
+  <!-- Info Section -->
+  <div class="info-section">
+
+    {{#unless (isHidden 'titleLine')}}
+    <div class="rwp-title" style="font-size: {{fontSize titleLine 42 24 30}}pt">{{titleLine}}</div>
+    {{/unless}}
+
+    {{#unless (isHidden 'tagline')}}
+    <div class="rwp-tagline" style="font-size: {{fontSize tagline 12 8 60}}pt">{{tagline}}</div>
+    {{/unless}}
+
+    <div class="info-details">
+      {{#unless (isHidden 'strecke')}}
+      <div class="info-detail-item">
+        <span class="info-label">Strecke:</span>
+        <span class="info-value" style="font-size: {{fontSize strecke 9 7 30}}pt">{{strecke}}</span>
+      </div>
+      {{/unless}}
+      {{#unless (isHidden 'treffpunkt')}}
+      <div class="info-detail-item">
+        <span class="info-label">Treffpunkt:</span>
+        <span class="info-value" style="font-size: {{fontSize treffpunkt 9 7 40}}pt">{{treffpunkt}}</span>
+      </div>
+      {{/unless}}
+    </div>
+
+    {{#unless (isHidden 'ctaText')}}
+    <div class="rwp-cta" style="font-size: {{fontSize ctaText 16 10 60}}pt">{{ctaText}}</div>
+    {{/unless}}
+
+    {{#unless (isHidden 'disclaimer')}}
+    <div class="rwp-disclaimer" style="font-size: {{fontSize disclaimer 6.5 5 150}}pt">{{disclaimer}}</div>
+    {{/unless}}
+
+    <!-- QR Code + Slogan -->
+    <div class="qr-area-rwp">
+      {{#unless (isHidden 'qrUrl')}}
+      {{#if qrCodeImage}}
+      <div class="qr-placeholder-rwp">
+        <img src="{{qrCodeImage}}" style="width:100%;height:100%;display:block;">
+      </div>
+      {{else}}
+      <div class="qr-placeholder-rwp">
+        <div class="qr-corner-rwp tl"></div>
+        <div class="qr-corner-rwp bl"></div>
+        <div class="qr-corner-rwp tr"></div>
+        <div class="qr-corner-rwp br"></div>
+      </div>
+      {{/if}}
+      {{/unless}}
+      {{#unless (isHidden 'sloganLine1')}}
+      <div class="qr-slogan-rwp">
+        <span class="slogan-top">{{sloganLine1}}</span>
+        {{#unless (isHidden 'sloganLine2')}}
+        <span class="slogan-bottom">{{sloganLine2}}</span>
+        {{/unless}}
+      </div>
+      {{/unless}}
+    </div>
+
+    <!-- Stern -->
+    <div class="star-deco-rwp">
+      <img src="../assets/logos/stern_White.svg" alt="">
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

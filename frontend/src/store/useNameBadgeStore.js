@@ -22,6 +22,13 @@ const DEFAULT_FIELDS = {
     color: '#333333', align: 'left',
     lineHeight: 1.2, letterSpacing: 0,
   },
+  workshop: {
+    x: 20, y: 40, width: 60,
+    fontSize: 9, fontFamily: 'Arial',
+    fontWeight: 'normal', fontStyle: 'italic',
+    color: '#555555', align: 'left',
+    lineHeight: 1.2, letterSpacing: 0,
+  },
 };
 
 const useNameBadgeStore = create((set, get) => ({

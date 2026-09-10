@@ -3,12 +3,14 @@ const iconv = require('iconv-lite');
 
 const MAX_ROWS = 500;
 const REQUIRED_COLUMNS = ['vorname', 'nachname', 'behoerde'];
+const OPTIONAL_COLUMNS = ['workshop'];
 
 // Column name aliases (case-normalized)
 const COLUMN_ALIASES = {
   vorname: ['vorname', 'vornamen', 'first name', 'firstname', 'first_name', 'name'],
   nachname: ['nachname', 'nachnamen', 'last name', 'lastname', 'last_name', 'surname', 'family name'],
   behoerde: ['behoerde', 'behörde', 'dienststelle', 'abteilung', 'organisation', 'organization', 'department', 'agency', 'authority', 'office', 'behörde/dienststelle'],
+  workshop: ['workshop', 'workshops', 'seminar', 'seminare', 'kurs', 'kurse', 'gruppe', 'group', 'workshop/titel', 'workshop/raum'],
 };
 
 // German umlauts and special chars to score encoding quality
@@ -105,7 +107,8 @@ function parseCsv(buffer, columnMapping = null) {
   // 5. Normalize headers for matching (lowercase + normalize umlauts)
   // Handles both lowercase (äöü) and uppercase (ÄÖÜ) since toLowerCase() converts ÄÖÜ→äöü
   const normalizeForMatch = (s) => s.toLowerCase()
-    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .replace(/[/\s]+/g, '');
 
   // 6. Build column map — either from user mapping or auto-detect
   let columnMap = {};
@@ -118,6 +121,13 @@ function parseCsv(buffer, columnMapping = null) {
         throw new Error(`Spalte "${mappedHeader}" nicht in CSV gefunden. Verfügbare: ${headers.join(', ')}`);
       }
       columnMap[target] = mappedHeader;
+    }
+    // Optional columns: map if provided, skip silently if not
+    for (const target of OPTIONAL_COLUMNS) {
+      const mappedHeader = columnMapping[target];
+      if (mappedHeader && headers.includes(mappedHeader)) {
+        columnMap[target] = mappedHeader;
+      }
     }
   } else {
     // Auto-detect via aliases (normalized matching for umlauts)
@@ -149,6 +159,7 @@ function parseCsv(buffer, columnMapping = null) {
     const vorname = (row[columnMap.vorname] || '').trim();
     const nachname = (row[columnMap.nachname] || '').trim();
     const behoerde = (row[columnMap.behoerde] || '').trim();
+    const workshop = columnMap.workshop ? (row[columnMap.workshop] || '').trim() : '';
 
     // Skip completely empty rows
     if (!vorname && !nachname && !behoerde) continue;
@@ -158,7 +169,9 @@ function parseCsv(buffer, columnMapping = null) {
       throw new Error(`Zeile ${i + 2}: Vorname und Nachname sind Pflichtfelder`);
     }
 
-    participants.push({ vorname, nachname, behoerde });
+    const participant = { vorname, nachname, behoerde };
+    if (workshop) participant.workshop = workshop;
+    participants.push(participant);
   }
 
   // 8. Validate row count

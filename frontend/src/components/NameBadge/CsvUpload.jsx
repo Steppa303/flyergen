@@ -7,6 +7,7 @@ const TARGET_COLUMNS = [
   { key: 'vorname', label: 'Vorname', required: true },
   { key: 'nachname', label: 'Nachname', required: true },
   { key: 'behoerde', label: 'Behörde', required: true },
+  { key: 'workshop', label: 'Workshop', required: false },
 ];
 
 export default function CsvUpload() {
@@ -297,6 +298,9 @@ export default function CsvUpload() {
                   <th className="text-left py-2 px-3 text-white/50 font-medium">Vorname</th>
                   <th className="text-left py-2 px-3 text-white/50 font-medium">Nachname</th>
                   <th className="text-left py-2 px-3 text-white/50 font-medium">Behörde</th>
+                  {preview.firstRows.some(r => r.workshop) && (
+                    <th className="text-left py-2 px-3 text-white/50 font-medium">Workshop</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -306,6 +310,9 @@ export default function CsvUpload() {
                     <td className="py-2 px-3 text-white/80">{row.vorname}</td>
                     <td className="py-2 px-3 text-white/80">{row.nachname}</td>
                     <td className="py-2 px-3 text-white/60">{row.behoerde}</td>
+                    {preview.firstRows.some(r => r.workshop) && (
+                      <td className="py-2 px-3 text-white/60">{row.workshop || ''}</td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -333,6 +340,7 @@ export default function CsvUpload() {
           </div>
           <ul className="mt-3 text-white/40 text-sm space-y-1">
             <li>• Pflichtspalten: Vorname, Nachname, Behörde</li>
+            <li>• Optionale Spalten: Workshop</li>
             <li>• Trennzeichen: Komma oder Semikolon (automatische Erkennung)</li>
             <li>• Encoding: UTF-8, Latin-1, Windows-1252 (automatische Erkennung)</li>
             <li>• Max. 500 Teilnehmer</li>

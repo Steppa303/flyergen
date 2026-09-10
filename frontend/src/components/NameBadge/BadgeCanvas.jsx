@@ -14,6 +14,7 @@ const FIELD_LABELS = {
   vorname: 'Vorname',
   nachname: 'Nachname',
   behoerde: 'Behörde',
+  workshop: 'Workshop',
 };
 
 
@@ -38,7 +39,7 @@ export default function BadgeCanvas() {
 
   // Get longest text per column from participants (worst-case for layout)
   const longestTexts = useMemo(() => {
-    const result = { vorname: '', nachname: '', behoerde: '' };
+    const result = { vorname: '', nachname: '', behoerde: '', workshop: '' };
     for (const p of participants) {
       for (const key of Object.keys(result)) {
         if ((p[key] || '').length > result[key].length) {

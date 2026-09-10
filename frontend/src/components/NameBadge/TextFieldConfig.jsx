@@ -19,6 +19,7 @@ const FIELD_LABELS = {
   vorname: 'Vorname',
   nachname: 'Nachname',
   behoerde: 'Behörde',
+  workshop: 'Workshop',
 };
 
 export default function TextFieldConfig() {
