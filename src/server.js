@@ -48,7 +48,8 @@ const templateSchemas = {
       { id: 'sloganLine1', type: 'text', label: 'Slogan Zeile 1', default: 'WER ERMITTELT …' },
       { id: 'sloganLine2', type: 'text', label: 'Slogan Zeile 2', default: 'WENN NICHT DU?' },
       { id: 'imageUrl', type: 'image', label: 'Flyer-Bild', default: '' },
-      { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' }
+      { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' },
+      { id: 'ctaVisible', type: 'boolean', label: 'CTA-Kreis anzeigen', default: true }
     ]
   },
   '02-crime-coaches': {
@@ -72,7 +73,8 @@ const templateSchemas = {
       { id: 'sloganLine1', type: 'text', label: 'Slogan Zeile 1', default: 'WER ERMITTELT …' },
       { id: 'sloganLine2', type: 'text', label: 'Slogan Zeile 2', default: 'WENN NICHT DU?' },
       { id: 'imageUrl', type: 'image', label: 'Flyer-Bild', default: '' },
-      { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' }
+      { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' },
+      { id: 'ctaVisible', type: 'boolean', label: 'CTA-Kreis anzeigen', default: true }
     ]
   },
   '04-run-with-police': {
@@ -111,7 +113,8 @@ const templateSchemas = {
       { id: 'tagline', type: 'text', label: 'Tagline', default: 'allesaufeinenblick!' },
       { id: 'ctaText', type: 'text', label: 'CTA-Text', default: 'BEWIRB DICH JETZT!' },
       { id: 'imageUrl', type: 'image', label: 'Flyer-Bild', default: '' },
-      { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' }
+      { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' },
+      { id: 'ctaVisible', type: 'boolean', label: 'CTA-Kreis anzeigen', default: true }
     ]
   }
 };

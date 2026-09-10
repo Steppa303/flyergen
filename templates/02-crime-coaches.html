@@ -567,7 +567,9 @@
         {{/unless}}
       </div>
       {{#unless (isHidden 'ctaText')}}
+      {{#if ctaVisible}}
       <div class="stamp-cta" style="font-size: 8pt">{{{ctaLines ctaText}}}</div>
+      {{/if}}
       {{/unless}}
     </div>
   </div>

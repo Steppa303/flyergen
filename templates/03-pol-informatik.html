@@ -374,7 +374,9 @@
     <div class="photo-top-gradient"></div>
     <div class="photo-header">
       {{#unless (isHidden 'ctaText')}}
+      {{#if ctaVisible}}
       <div class="stamp-cta" style="font-size: 7pt">{{{ctaLines ctaText}}}</div>
+      {{/if}}
       {{/unless}}
     </div>
 
