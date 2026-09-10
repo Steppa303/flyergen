@@ -32,7 +32,14 @@ export default function FormField({ field, value, onChange, hidden, onToggleHidd
             disabled
             placeholder={field.label}
           />
-        ) : field.type === 'image' ? null : (
+        ) : field.type === 'image' ? null : field.type === 'boolean' ? (
+          <div className="flex items-center gap-3">
+            <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-white/10">
+              <span className="inline-block h-4 w-4 transform rounded-full bg-white/30 translate-x-1" />
+            </div>
+            <span className="text-sm text-white/30">Aus</span>
+          </div>
+        ) : (
           <input
             type="text"
             className="input-field"
@@ -70,6 +77,30 @@ export default function FormField({ field, value, onChange, hidden, onToggleHidd
           onChange={(e) => onChange(field.id, e.target.value)}
           placeholder={field.label}
         />
+      </div>
+    );
+  }
+
+  if (field.type === 'boolean') {
+    const checked = value === true || value === 'true';
+    return (
+      <div>
+        <div className="flex items-center justify-between">
+          <label className="label-text">{field.label}</label>
+          {toggleBtn}
+        </div>
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <button
+            type="button"
+            onClick={() => onChange(field.id, !checked)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-lime' : 'bg-white/20'}`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
+            />
+          </button>
+          <span className="text-sm text-white/60">{checked ? 'An' : 'Aus'}</span>
+        </label>
       </div>
     );
   }

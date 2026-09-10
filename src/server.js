@@ -94,7 +94,8 @@ const templateSchemas = {
       { id: 'sloganLine1', type: 'text', label: 'Slogan Zeile 1', default: '' },
       { id: 'sloganLine2', type: 'text', label: 'Slogan Zeile 2', default: '' },
       { id: 'imageUrl', type: 'image', label: 'Hero-Bild', default: '' },
-      { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' }
+      { id: 'qrUrl', type: 'text', label: 'QR-Code Link (optional)', default: '' },
+      { id: 'starVisible', type: 'boolean', label: 'Polizei-Stern anzeigen', default: true }
     ]
   },
   '03-pol-informatik': {
